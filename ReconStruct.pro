@@ -14,11 +14,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    comboboxdelegate.cpp
+    comboboxdelegate.cpp \
+    sizefielddelegate.cpp \
+    sizefield.cpp
 
 HEADERS  += mainwindow.h \
-    comboboxdelegate.h
+    comboboxdelegate.h \
+    sizefielddelegate.h \
+    sizefield.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    sizefield.ui
 
 include(QHexEdit/src/qhexedit_widget.pri)

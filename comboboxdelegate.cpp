@@ -1,4 +1,3 @@
-#include <QItemDelegate>
 #include <QComboBox>
 #include "comboboxdelegate.h"
 
@@ -17,19 +16,17 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
     return editor;
 }
 
-void ComboBoxDelegate::setEditorData(QWidget*, const QModelIndex&) const
-{
-    // QString value = index.model()->data(index, Qt::EditRole).toString();
-    //QComboBox *comboBox = static_cast<QComboBox*>(editor);
-}
-
-void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+void ComboBoxDelegate::setModelData(QWidget *editor,
+                                    QAbstractItemModel *model,
+                                    const QModelIndex &index) const
 {
     QComboBox *comboBox = static_cast<QComboBox*>(editor);
     model->setData(index, comboBox->currentText(), Qt::EditRole);
 }
 
-void ComboBoxDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &/* index */) const
+void ComboBoxDelegate::updateEditorGeometry(QWidget *editor,
+                                            const QStyleOptionViewItem &option,
+                                            const QModelIndex&) const
 {
     editor->setGeometry(option.rect);
 }

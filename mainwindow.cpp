@@ -7,6 +7,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "comboboxdelegate.h"
+#include "sizefielddelegate.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -41,6 +42,7 @@ void MainWindow::setModel()
 
     QStandardItem *lbl_size = new QStandardItem(tr("Size"));
     model->setHorizontalHeaderItem(1, lbl_size);
+    ui->treeView->setItemDelegateForColumn(1, new SizeFieldDelegate(ui->treeView));
 
     QStandardItem *lbl_type = new QStandardItem(tr("Type"));
     model->setHorizontalHeaderItem(2, lbl_type);

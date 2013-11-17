@@ -1,12 +1,12 @@
-#ifndef COMBOBOXDELEGATE_H
-#define COMBOBOXDELEGATE_H
+#ifndef SIZEFIELDDELEGATE_H
+#define SIZEFIELDDELEGATE_H
 
 #include <QItemDelegate>
 
-class ComboBoxDelegate : public QItemDelegate
+class SizeFieldDelegate : public QItemDelegate
 {
 public:
-    explicit ComboBoxDelegate(QObject *parent, const QStringList &items);
+    explicit SizeFieldDelegate(QObject *parent);
     QWidget *createEditor(QWidget *parent,
                           const QStyleOptionViewItem & option,
                           const QModelIndex & index) const;
@@ -14,9 +14,7 @@ public:
                       const QModelIndex &index) const;
     void updateEditorGeometry(QWidget *editor,
                               const QStyleOptionViewItem &option,
-                              const QModelIndex & index) const;
-private:
-    const QStringList items;
+                              const QModelIndex &index ) const;
 };
 
-#endif // COMBOBOXDELEGATE_H
+#endif // SIZEFIELDDELEGATE_H
