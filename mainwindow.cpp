@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QComboBox>
 #include <QStandardItemModel>
+#include <QItemSelectionModel>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -11,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     model(new QStandardItemModel()),
+    selectionModel(new QItemSelectionModel(model, this)),
     currentFile(QString())
 {
     ui->setupUi(this);
@@ -20,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(addRow()));
     connect(model, SIGNAL(itemChanged(QStandardItem*)),
             this, SLOT(itemChanged(QStandardItem*)));
+    connect(selectionModel, SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+            this, SLOT(selectionChanged()));
     setModel();
     ui->treeView->setEnabled(false);
 }
@@ -46,6 +50,7 @@ void MainWindow::setModel()
     model->setHorizontalHeaderItem(3, lbl_prev);
 
     ui->treeView->setModel(model);
+    ui->treeView->setSelectionModel(selectionModel);
     ui->treeView->setColumnWidth(0, 100);
     ui->treeView->setColumnWidth(1, 50);
     ui->treeView->setColumnWidth(2, 55);
@@ -208,7 +213,7 @@ void MainWindow::addRow()
     ui->treeView->edit(model->indexFromItem(label));
 }
 
-void MainWindow::itemChanged(QStandardItem *item)
+void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
 {
     QModelIndex index = model->indexFromItem(item);
     if (index.column() == 3)
@@ -224,6 +229,34 @@ void MainWindow::itemChanged(QStandardItem *item)
     if (index.row() + 1 < model->rowCount())
     {
         QStandardItem *nextRow = model->item(index.row() + 1, index.column());
-        itemChanged(nextRow);
+        itemChanged(nextRow, false);
+    }
+    if (selectAfter)
+    {
+        selectionModel->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        selectionChanged();
+    }
+}
+
+bool rowLessThan(const QModelIndex &lhs, const QModelIndex &rhs)
+{
+    return lhs.row() < rhs.row();
+}
+
+void MainWindow::selectionChanged()
+{
+    QModelIndexList selectedRows = selectionModel->selectedRows();
+    if (selectedRows.isEmpty())
+    {
+        ui->qHexEdit->setSelection(0, 0);
+        return;
+    }
+    bool ok;
+    int start = getCoveredSize(selectedRows.first().row());
+    int size = model->item(selectedRows.last().row(), 1)->text().toInt(&ok, 0);
+    if (selectedRows.length() > 1)
+        size += getCoveredSize(selectedRows.last().row()) - start;
+    if (ok){
+        ui->qHexEdit->setSelection(start, start + size);
     }
 }

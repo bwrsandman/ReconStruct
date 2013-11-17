@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QItemSelection>
 
 namespace Ui {
 class MainWindow;
@@ -9,6 +10,7 @@ class MainWindow;
 class QComboBox;
 class QStandardItem;
 class QStandardItemModel;
+class QItemSelectionModel;
 
 const QStringList defaultTypes = QStringList() << "bytes" << "str"
                                                << "int" << "bool" ;
@@ -26,6 +28,7 @@ public:
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *model;
+    QItemSelectionModel* selectionModel;
     QString currentFile;
 
     void setModel();
@@ -44,7 +47,8 @@ private:
 private slots:
     void open();
     void addRow();
-    void itemChanged(QStandardItem*);
+    void itemChanged(QStandardItem*, bool selectAfter=true);
+    void selectionChanged();
 };
 
 #endif // MAINWINDOW_H
