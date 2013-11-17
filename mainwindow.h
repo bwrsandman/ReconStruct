@@ -7,6 +7,7 @@ namespace Ui {
 class MainWindow;
 }
 class QComboBox;
+class QStandardItem;
 class QStandardItemModel;
 
 const QStringList defaultTypes = QStringList() << "bytes" << "str"
@@ -29,7 +30,12 @@ private:
 
     void setModel();
     void loadFile(const QString &fileName);
+    QString formatPreview(const int start, const int end,
+                          const QString& type) const;
     QString formatBytes(const QByteArray& byteString) const;
+    QString formatStr(const QByteArray& byteString) const;
+    QString formatInt(const QByteArray& byteString) const;
+    QString formatBool(const QByteArray& byteString) const;
     int getEntrySize(const int row) const;
     int getCoveredSize(const int end) const;
     int getSelectionSize() const;
@@ -38,6 +44,7 @@ private:
 private slots:
     void open();
     void addRow();
+    void itemChanged(QStandardItem*);
 };
 
 #endif // MAINWINDOW_H

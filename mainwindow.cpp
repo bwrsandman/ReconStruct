@@ -17,7 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->action_Open, SIGNAL(triggered()),
             this, SLOT(open()));
     connect(ui->action_Add, SIGNAL(triggered()),
-            this, SLOT(addRow()));;
+            this, SLOT(addRow()));
+    connect(model, SIGNAL(itemChanged(QStandardItem*)),
+            this, SLOT(itemChanged(QStandardItem*)));
     setModel();
     ui->treeView->setEnabled(false);
 }
@@ -44,10 +46,10 @@ void MainWindow::setModel()
     model->setHorizontalHeaderItem(3, lbl_prev);
 
     ui->treeView->setModel(model);
-    ui->treeView->setColumnWidth(0, 75);
+    ui->treeView->setColumnWidth(0, 100);
     ui->treeView->setColumnWidth(1, 50);
     ui->treeView->setColumnWidth(2, 55);
-    ui->treeView->setColumnWidth(3, 50);
+    ui->treeView->setColumnWidth(3, 20);
 }
 
 void MainWindow::loadFile(const QString &fileName)
@@ -71,6 +73,25 @@ void MainWindow::loadFile(const QString &fileName)
     model->removeRows(0, model->rowCount());
 }
 
+QString MainWindow::formatPreview(const int start, const int end, const QString &type) const
+{
+    QByteArray byteString = ui->qHexEdit->data().mid(start, end);
+    QString previewText;
+    if (type == "bytes") {
+        previewText = formatBytes(byteString);
+    } else if (type == "str"){
+        previewText = formatStr(byteString);
+    } else if (type == "int"){
+        previewText = formatInt(byteString);
+    } else if (type == "bool"){
+        previewText = formatBool(byteString);
+    } else {
+        previewText = tr("TODO: Preview unimplemented (%1)")
+                        .arg(formatBytes(byteString));
+    }
+    return previewText;
+}
+
 QString MainWindow::formatBytes(const QByteArray& byteString) const
 {
     if (byteString.isEmpty())
@@ -79,11 +100,43 @@ QString MainWindow::formatBytes(const QByteArray& byteString) const
 
 }
 
+QString MainWindow::formatStr(const QByteArray& byteString) const
+{
+    if (byteString.isEmpty())
+            return QString();
+    return QString(byteString);
+
+}
+
+QString MainWindow::formatInt(const QByteArray& byteString) const
+{
+    if (byteString.isEmpty())
+            return QString();
+    bool ok = true;
+    // Reverse byte order
+    QByteArray reverse = QByteArray(byteString.length(), '\0');
+    std::reverse_copy(byteString.constBegin(), byteString.constEnd(),
+                      reverse.begin());
+    QString ret = QString::number(reverse.toHex().toInt(&ok, 16));
+    return ok? ret: tr("Error");
+
+}
+
+QString MainWindow::formatBool(const QByteArray& byteString) const
+{
+    if (byteString.isEmpty())
+            return QString("false");
+    bool ok = true;
+    QString ret = (byteString.toHex().toInt(&ok, 16))? "true" : "false";
+    return ok? ret: tr("Error");
+
+}
+
 int MainWindow::getEntrySize(const int row) const
 {
     // Get the int representation of the size for the row
     QString text = model->item(row, 1)->text();
-    return text.toInt(0, 16);
+    return text.toInt(0, 0);
 }
 
 int MainWindow::getCoveredSize(const int end) const
@@ -141,10 +194,7 @@ void MainWindow::addRow()
     // Default datatype is bytes
     newRow.push_back(new QStandardItem("bytes"));
     // Preview column is non-editable
-    QString byteString = formatBytes(ui->qHexEdit->data().mid(
-                                     getCoveredSize(model->rowCount()),
-                                     size));
-    QStandardItem *preview = new QStandardItem(byteString);
+    QStandardItem *preview = new QStandardItem();
     preview->setEditable(false);
     newRow.push_back(preview);
     // Add item and put in edit mode
@@ -156,4 +206,24 @@ void MainWindow::addRow()
         model->appendRow(newRow);
 //    }
     ui->treeView->edit(model->indexFromItem(label));
+}
+
+void MainWindow::itemChanged(QStandardItem *item)
+{
+    QModelIndex index = model->indexFromItem(item);
+    if (index.column() == 3)
+        return;
+    QStandardItem *size = model->item(index.row(), 1);
+    QStandardItem *type = model->item(index.row(), 2);
+    QStandardItem *preview = model->item(index.row(), 3);
+    QString byteString = formatPreview(getCoveredSize(index.row()),
+                                       size->text().toInt(0, 0),
+                                       type->text());
+    preview->setText(byteString);
+    // Cascade changes to following rows
+    if (index.row() + 1 < model->rowCount())
+    {
+        QStandardItem *nextRow = model->item(index.row() + 1, index.column());
+        itemChanged(nextRow);
+    }
 }
