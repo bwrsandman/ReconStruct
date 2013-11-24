@@ -39,6 +39,7 @@ private:
     QString formatStr(const QByteArray& byteString) const;
     QString formatInt(const QByteArray& byteString) const;
     QString formatBool(const QByteArray& byteString) const;
+    int getSizeFromText(const QString text, const int end) const;
     int getEntrySize(const int row) const;
     int getCoveredSize(const int end) const;
     int getSelectionSize() const;

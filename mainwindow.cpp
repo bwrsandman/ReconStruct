@@ -137,11 +137,35 @@ QString MainWindow::formatBool(const QByteArray& byteString) const
 
 }
 
+int MainWindow::getSizeFromText(const QString text, const int end) const
+{
+    bool ok;
+    int res = 0;
+    for (int i = end - 1; i >= 0; --i)
+    {
+        if(model->item(i, 0)->text() == text)
+        {
+            res = model->item(i, 3)->text().toInt(&ok, 0);
+            break;
+        }
+    }
+    return res;
+}
+
 int MainWindow::getEntrySize(const int row) const
 {
     // Get the int representation of the size for the row
     QString text = model->item(row, 1)->text();
-    return text.toInt(0, 0);
+    if (text.isNull() || text.isEmpty()) {
+        return 0;
+    }
+    bool ok;
+    int res = text.toInt(&ok, 0);
+    if (ok) {
+        return res;
+    } else { // text may need to be substituted
+        return getSizeFromText(text, row);
+    }
 }
 
 int MainWindow::getCoveredSize(const int end) const
@@ -222,7 +246,7 @@ void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
     QStandardItem *type = model->item(index.row(), 2);
     QStandardItem *preview = model->item(index.row(), 3);
     QString byteString = formatPreview(getCoveredSize(index.row()),
-                                       size->text().toInt(0, 0),
+                                       getEntrySize(index.row()),
                                        type->text());
     preview->setText(byteString);
     // Cascade changes to following rows
@@ -251,12 +275,9 @@ void MainWindow::selectionChanged()
         ui->qHexEdit->setSelection(0, 0);
         return;
     }
-    bool ok;
     int start = getCoveredSize(selectedRows.first().row());
-    int size = model->item(selectedRows.last().row(), 1)->text().toInt(&ok, 0);
+    int size = getEntrySize(selectedRows.last().row());
     if (selectedRows.length() > 1)
         size += getCoveredSize(selectedRows.last().row()) - start;
-    if (ok){
-        ui->qHexEdit->setSelection(start, start + size);
-    }
+    ui->qHexEdit->setSelection(start, start + size);
 }
