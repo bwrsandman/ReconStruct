@@ -141,9 +141,10 @@ int MainWindow::getSizeFromText(const QString text, const int end) const
 {
     bool ok;
     int res = 0;
+    const QString trimmed = text.trimmed();
     for (int i = end - 1; i >= 0; --i)
     {
-        if(model->item(i, 0)->text() == text)
+        if(model->item(i, 0)->text() == trimmed)
         {
             res = model->item(i, 3)->text().toInt(&ok, 0);
             break;
@@ -152,6 +153,68 @@ int MainWindow::getSizeFromText(const QString text, const int end) const
     return res;
 }
 
+int MainWindow::parseSizeElement(const QString text, const int row) const
+{
+    bool ok;
+    int res = text.toInt(&ok, 0);
+    if (ok) {
+        return res;
+    } else {
+        return getSizeFromText(text, row);
+    }
+}
+
+int MainWindow::parseEquals(const QString text, const int row) const
+{
+    QStringList elementList = text.split("==");
+    int res = parseSizeElement(elementList.first(), row);
+    for (int k = 1; k < elementList.length(); ++k)
+    {
+        QString element = elementList.at(k);
+        res = res == parseSizeElement(element, row);
+    }
+    return res;
+}
+
+int MainWindow::parseNequals(const QString text, const int row) const
+{
+    QStringList elementList = text.split("!=");
+    int res = parseEquals(elementList.first(), row);
+    for (int k = 1; k < elementList.length(); ++k)
+    {
+        QString element = elementList.at(k);
+        res = res != parseEquals(element, row);
+    }
+    return res;
+}
+
+int MainWindow::parseProduct(const QString text, const int row) const
+{
+    QStringList elementList = text.split("*");
+    int res = parseNequals(elementList.first(), row);
+    for (int k = 1; k < elementList.length(); ++k)
+    {
+        QString element = elementList.at(k);
+        res *= parseNequals(element, row);
+    }
+    return res;
+}
+
+/*
+ * Basic operations are allowed:
+ * products (*), not-equals (!=) and equals (==)
+ * they are calculated with equals first, not-equals, second
+ * and products last
+ */
+int MainWindow::parseSizeExpression(const QString text, const int row) const
+{
+    return parseProduct(text, row);
+}
+
+/*
+ * Get text from size, split by operators,
+ * substitute non-numbers and calculate
+ */
 int MainWindow::getEntrySize(const int row) const
 {
     // Get the int representation of the size for the row
@@ -159,13 +222,7 @@ int MainWindow::getEntrySize(const int row) const
     if (text.isNull() || text.isEmpty()) {
         return 0;
     }
-    bool ok;
-    int res = text.toInt(&ok, 0);
-    if (ok) {
-        return res;
-    } else { // text may need to be substituted
-        return getSizeFromText(text, row);
-    }
+    return parseSizeExpression(text, row);
 }
 
 int MainWindow::getCoveredSize(const int end) const

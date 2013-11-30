@@ -41,6 +41,11 @@ private:
     QString formatBool(const QByteArray& byteString) const;
     int getSizeFromText(const QString text, const int end) const;
     int getEntrySize(const int row) const;
+    int parseSizeElement(const QString text, const int row) const;
+    int parseSizeExpression(const QString text, const int row) const;
+    int parseProduct(const QString text, const int row) const;
+    int parseNequals(const QString text, const int row) const;
+    int parseEquals(const QString text, const int row) const;
     int getCoveredSize(const int end) const;
     int getSelectionSize() const;
     void setCurrentFile(const QString &fileName);
