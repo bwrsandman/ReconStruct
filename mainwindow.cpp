@@ -18,6 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->action_Open, SIGNAL(triggered()),
             this, SLOT(open()));
+    connect(ui->action_Import_Schema, SIGNAL(triggered()),
+            this, SLOT(loadSchema()));
+    connect(ui->action_Export_Schema, SIGNAL(triggered()),
+            this, SLOT(saveSchema()));
     connect(ui->action_Add, SIGNAL(triggered()),
             this, SLOT(addRow()));
     connect(model, SIGNAL(itemChanged(QStandardItem*)),
@@ -25,7 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(selectionModel, SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
             this, SLOT(selectionChanged()));
     setModel();
-    ui->treeView->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -69,13 +72,11 @@ void MainWindow::loadFile(const QString &fileName)
     // TODO: OPTIMIZE: large files will consume a lot of memory
     QApplication::setOverrideCursor(Qt::WaitCursor);
     ui->qHexEdit->setData(file.readAll());
+    file.close();
     QApplication::restoreOverrideCursor();
 
     setCurrentFile(fileName);
-
-    // Clear treeView
-    ui->treeView->setEnabled(true);
-    model->removeRows(0, model->rowCount());
+    refreshPreview();
 }
 
 QString MainWindow::formatPreview(const int start, const int end, const QString &type) const
@@ -219,7 +220,7 @@ int MainWindow::getEntrySize(const int row) const
 {
     // Get the int representation of the size for the row
     QString text = model->item(row, 1)->text();
-    if (text.isNull() || text.isEmpty()) {
+    if (text.isEmpty()) {
         return 0;
     }
     return parseSizeExpression(text, row);
@@ -246,8 +247,21 @@ int MainWindow::getSelectionSize() const
 void MainWindow::setCurrentFile(const QString &fileName)
 {
     currentFile = QFileInfo(fileName).canonicalFilePath();
+//    setWindowModified(false);
+//    setWindowFilePath(currentFile);
+}
+
+void MainWindow::setCurrentSchemaFile(const QString &fileName)
+{
+    currentSchemaFile = QFileInfo(fileName).canonicalFilePath();
     setWindowModified(false);
-    setWindowFilePath(currentFile);
+    setWindowFilePath(currentSchemaFile);
+}
+
+void MainWindow::refreshPreview()
+{
+    if (model->rowCount() > 0)
+        itemChanged(model->item(0), false);
 }
 
 /*
@@ -263,7 +277,119 @@ void MainWindow::open()
     }
 }
 
-void MainWindow::addRow()
+/*
+ * Schema is in markdown table format
+ */
+
+void MainWindow::loadSchema()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+                this, tr("Open schema of binary file"));
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        QString msg = tr("Cannot read file %1").arg(fileName);
+        QMessageBox::warning(this, msg, msg + ":\n"
+                             + file.errorString());
+        return;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    // Clear treeView
+    ui->treeView->setEnabled(true);
+    model->removeRows(0, model->rowCount());
+
+    // Read first two lines
+    if (!file.atEnd())
+        file.readLine(0);
+    if (!file.atEnd())
+        file.readLine(0);
+
+    while (!file.atEnd())
+    {
+        QString line = QString::fromUtf8(file.readLine(0));
+        QStringList lineElements = line.split('|');
+        if (lineElements.length() < 3)
+            continue;
+        QString label = lineElements.at(1).trimmed();
+        QString size = lineElements.at(2).trimmed();
+        QString type = lineElements.at(3).trimmed();
+        addRow(label, size, type);
+    }
+
+    file.close();
+    QApplication::restoreOverrideCursor();
+
+    setCurrentSchemaFile(fileName);
+    refreshPreview();
+}
+
+void MainWindow::saveSchema()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+                this, tr("Save schema of binary file"));
+    if (fileName.isEmpty()) {
+        return;
+    }
+    QFile file(fileName);
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        QString msg = tr("Cannot write to file %1").arg(fileName);
+        QMessageBox::warning(this, msg, msg + ":\n"
+                             + file.errorString());
+        return;
+    }
+    QTextStream out(&file);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    QString labelTitle = tr("Contents"),
+            sizeTitle = tr("Size"),
+            typeTitle = tr("Type"),
+            descTitle = tr("Description (optional)");
+
+    int labelLen = labelTitle.length(),
+        sizeLen = sizeTitle.length(),
+        typeLen = typeTitle.length(),
+        descLen = descTitle.length();
+
+    // Get max size for padding
+    for (int i = 0; i < model->rowCount(); ++i)
+    {
+        labelLen = std::max(labelLen, model->item(i, 0)->text().length());
+        sizeLen = std::max(sizeLen, model->item(i, 1)->text().length());
+        typeLen = std::max(typeLen, model->item(i, 2)->text().length());
+    }
+    const QString tableFormat = QString("| %1 | %2 | %3 | %4 |\n");
+    const QString seperFormat = QString("|-%1-|-%2-|-%3-|-%4-|\n");
+
+    out << tableFormat.arg(labelTitle, -labelLen)
+                      .arg(sizeTitle, -sizeLen)
+                      .arg(typeTitle, -typeLen)
+                      .arg(descTitle, -descLen)
+        << seperFormat.arg("", -labelLen, '-')
+                      .arg("", -sizeLen, '-')
+                      .arg("", -typeLen, '-')
+                      .arg("", -descLen, '-');
+
+    for (int i = 0; i < model->rowCount(); ++i)
+    {
+        out << tableFormat.arg(model->item(i, 0)->text(), -labelLen)
+                              .arg(model->item(i, 1)->text(), -sizeLen)
+                              .arg(model->item(i, 2)->text(), -typeLen)
+                              .arg("", -descLen);
+    }
+
+    file.close();
+    QApplication::restoreOverrideCursor();
+
+    setCurrentSchemaFile(fileName);
+}
+
+void MainWindow::addRow(QString labelText,
+                        QString sizeText,
+                        QString typeText)
 {
     if (currentFile.isEmpty())
         return;
@@ -271,14 +397,16 @@ void MainWindow::addRow()
                                                  ->selectedRows();
     // Create new row(label, size, type, preview)
     QList<QStandardItem*> newRow;
-    QStandardItem *label = new QStandardItem();
+    QStandardItem *label = new QStandardItem(labelText);
     newRow.push_back(label);
     // Default size is position of cursor on hex view
-    int size = getSelectionSize();
-    QString hexNumber = "0x" + QString::number(size, 16).toUpper();
-    newRow.push_back(new QStandardItem(hexNumber));
+    if (sizeText.isEmpty()) {
+        int size = getSelectionSize();
+        sizeText = "0x" + QString::number(size, 16).toUpper();
+    }
+    newRow.push_back(new QStandardItem(sizeText));
     // Default datatype is bytes
-    newRow.push_back(new QStandardItem("bytes"));
+    newRow.push_back(new QStandardItem(typeText));
     // Preview column is non-editable
     QStandardItem *preview = new QStandardItem();
     preview->setEditable(false);

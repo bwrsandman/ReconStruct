@@ -30,6 +30,7 @@ private:
     QStandardItemModel *model;
     QItemSelectionModel* selectionModel;
     QString currentFile;
+    QString currentSchemaFile;
 
     void setModel();
     void loadFile(const QString &fileName);
@@ -49,10 +50,16 @@ private:
     int getCoveredSize(const int end) const;
     int getSelectionSize() const;
     void setCurrentFile(const QString &fileName);
+    void setCurrentSchemaFile(const QString &fileName);
+    void refreshPreview();
 
 private slots:
     void open();
-    void addRow();
+    void loadSchema();
+    void saveSchema();
+    void addRow(QString labelText=QString(),
+                QString sizeText=QString(),
+                QString typeText=QString("bytes"));
     void itemChanged(QStandardItem*, bool selectAfter=true);
     void selectionChanged();
 };

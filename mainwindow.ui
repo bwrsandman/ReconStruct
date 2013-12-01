@@ -74,8 +74,8 @@
     <addaction name="action_Open"/>
     <addaction name="action_Save"/>
     <addaction name="separator"/>
-    <addaction name="action_Export_Schema"/>
     <addaction name="action_Import_Schema"/>
+    <addaction name="action_Export_Schema"/>
     <addaction name="separator"/>
     <addaction name="action_Close"/>
    </widget>
