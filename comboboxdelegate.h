@@ -16,8 +16,10 @@ public:
     void updateEditorGeometry(QWidget *editor,
                               const QStyleOptionViewItem &option,
                               const QModelIndex & index) const;
+    void addItem(const QString);
 private:
     const QStringList items;
+    QStringList customItems;
 };
 
 #endif // COMBOBOXDELEGATE_H

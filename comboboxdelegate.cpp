@@ -4,7 +4,8 @@
 
 ComboBoxDelegate::ComboBoxDelegate(QObject *parent, const QStringList &items):
     QItemDelegate(parent),
-    items(items)
+    items(items),
+    customItems(QStringList())
 {
 }
 
@@ -14,6 +15,11 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
 {
     QComboBox *editor = new QComboBox(parent);
     editor->addItems(items);
+    editor->insertSeparator(items.length());
+    editor->addItems(customItems);
+    if (!customItems.isEmpty())
+        editor->insertSeparator(items.length() + customItems.length() + 1);
+    editor->addItem(tr("custom"));
     return editor;
 }
 
@@ -32,4 +38,10 @@ void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
 void ComboBoxDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &/* index */) const
 {
     editor->setGeometry(option.rect);
+}
+
+void ComboBoxDelegate::addItem(const QString item)
+{
+    if (!items.contains(item) && !customItems.contains(item))
+        customItems.append(item);
 }

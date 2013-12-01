@@ -1,4 +1,5 @@
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QComboBox>
 #include <QStandardItemModel>
@@ -47,7 +48,8 @@ void MainWindow::setModel()
 
     QStandardItem *lbl_type = new QStandardItem(tr("Type"));
     model->setHorizontalHeaderItem(2, lbl_type);
-    ui->treeView->setItemDelegateForColumn(2, new ComboBoxDelegate(ui->treeView, defaultTypes));
+    typesDelegate = new ComboBoxDelegate(ui->treeView, defaultTypes);
+    ui->treeView->setItemDelegateForColumn(2, typesDelegate);
 
     QStandardItem *lbl_prev = new QStandardItem(tr("Preview"));
     model->setHorizontalHeaderItem(3, lbl_prev);
@@ -389,12 +391,13 @@ void MainWindow::saveSchema()
 
 void MainWindow::addRow(QString labelText,
                         QString sizeText,
-                        QString typeText)
+                        QString typeText,
+                        QStandardItem *rootItem)
 {
     if (currentFile.isEmpty())
         return;
-    QModelIndexList selectedItems = ui->treeView->selectionModel()
-                                                 ->selectedRows();
+    if (!rootItem)
+        rootItem = model->invisibleRootItem();
     // Create new row(label, size, type, preview)
     QList<QStandardItem*> newRow;
     QStandardItem *label = new QStandardItem(labelText);
@@ -413,12 +416,7 @@ void MainWindow::addRow(QString labelText,
     newRow.push_back(preview);
     // Add item and put in edit mode
     // Put as child of selected item if there is only one
-//    if (selectedItems.length() == 1) {
-//        ui->treeView->expand(selectedItems[0]);
-//        model->itemFromIndex(selectedItems[0])->appendRow(newRow);
-//    } else {
-        model->appendRow(newRow);
-//    }
+    rootItem->appendRow(newRow);
     ui->treeView->edit(model->indexFromItem(label));
 }
 
@@ -434,6 +432,17 @@ void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
                                        getEntrySize(index.row()),
                                        type->text());
     preview->setText(byteString);
+    if (index.column() == 2 && type->text() == tr("custom"))
+    {
+        QString customType = QInputDialog::getText(this,
+                                                   tr("Enter custom datatype name"),
+                                                   tr("Enter custom datatype name"));
+        typesDelegate->addItem(customType);
+        type->setText(customType);
+
+        addRow("", "", "bytes", model->item(item->row()));
+        ui->treeView->expand(index);
+    }
     // Cascade changes to following rows
     if (index.row() + 1 < model->rowCount())
     {

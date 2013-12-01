@@ -11,9 +11,10 @@ class QComboBox;
 class QStandardItem;
 class QStandardItemModel;
 class QItemSelectionModel;
+class ComboBoxDelegate;
 
 const QStringList defaultTypes = QStringList() << "bytes" << "str"
-                                               << "int" << "bool" ;
+                                               << "int" << "bool";
 const QStringList columns = QStringList() << "Label" << "Size"
                                           << "Type" << "Preview";
 
@@ -29,6 +30,7 @@ private:
     Ui::MainWindow *ui;
     QStandardItemModel *model;
     QItemSelectionModel* selectionModel;
+    ComboBoxDelegate *typesDelegate;
     QString currentFile;
     QString currentSchemaFile;
 
@@ -59,7 +61,8 @@ private slots:
     void saveSchema();
     void addRow(QString labelText=QString(),
                 QString sizeText=QString(),
-                QString typeText=QString("bytes"));
+                QString typeText=QString("bytes"),
+                QStandardItem *rootItem=0);
     void itemChanged(QStandardItem*, bool selectAfter=true);
     void selectionChanged();
 };
