@@ -41,25 +41,25 @@ MainWindow::~MainWindow()
 void MainWindow::setModel()
 {
     QStandardItem *lbl_label = new QStandardItem(tr("Label"));
-    model->setHorizontalHeaderItem(0, lbl_label);
+    model->setHorizontalHeaderItem(cols::LABEL, lbl_label);
 
     QStandardItem *lbl_size = new QStandardItem(tr("Size"));
-    model->setHorizontalHeaderItem(1, lbl_size);
+    model->setHorizontalHeaderItem(cols::SIZE, lbl_size);
 
     QStandardItem *lbl_type = new QStandardItem(tr("Type"));
-    model->setHorizontalHeaderItem(2, lbl_type);
+    model->setHorizontalHeaderItem(cols::TYPE, lbl_type);
     typesDelegate = new ComboBoxDelegate(ui->treeView, defaultTypes);
-    ui->treeView->setItemDelegateForColumn(2, typesDelegate);
+    ui->treeView->setItemDelegateForColumn(cols::TYPE, typesDelegate);
 
     QStandardItem *lbl_prev = new QStandardItem(tr("Preview"));
-    model->setHorizontalHeaderItem(3, lbl_prev);
+    model->setHorizontalHeaderItem(cols::PREVIEW, lbl_prev);
 
     ui->treeView->setModel(model);
     ui->treeView->setSelectionModel(selectionModel);
-    ui->treeView->setColumnWidth(0, 100);
-    ui->treeView->setColumnWidth(1, 50);
-    ui->treeView->setColumnWidth(2, 55);
-    ui->treeView->setColumnWidth(3, 20);
+    ui->treeView->setColumnWidth(cols::LABEL, 100);
+    ui->treeView->setColumnWidth(cols::SIZE, 50);
+    ui->treeView->setColumnWidth(cols::TYPE, 55);
+    ui->treeView->setColumnWidth(cols::PREVIEW, 20);
 }
 
 void MainWindow::loadFile(const QString &fileName)
@@ -147,9 +147,9 @@ int MainWindow::getSizeFromText(const QString text, const int end) const
     const QString trimmed = text.trimmed();
     for (int i = end - 1; i >= 0; --i)
     {
-        if(model->item(i, 0)->text() == trimmed)
+        if(model->item(i, cols::LABEL)->text() == trimmed)
         {
-            res = model->item(i, 3)->text().toInt(&ok, 0);
+            res = model->item(i, cols::PREVIEW)->text().toInt(&ok, 0);
             break;
         }
     }
@@ -230,7 +230,7 @@ int MainWindow::getEntrySize(const int row, QStandardItem *parent, bool fromChil
         return 0;
     }
     int size = parseSizeExpression(text, row);
-    if (fromChildren && typesDelegate->getCustomItems().contains(parent->child(row, 2)->text()))
+    if (fromChildren && typesDelegate->getCustomItems().contains(parent->child(row, cols::TYPE)->text()))
     {
         size *= getCoveredSize(size, parent->child(0));
     }
@@ -327,9 +327,9 @@ void MainWindow::loadSchema()
         QStringList lineElements = line.split('|');
         if (lineElements.length() < 3)
             continue;
-        QString label = lineElements.at(1).trimmed();
-        QString size = lineElements.at(2).trimmed();
-        QString type = lineElements.at(3).trimmed();
+        QString label = lineElements.at(cols::LABEL + 1).trimmed();
+        QString size = lineElements.at(cols::SIZE + 1).trimmed();
+        QString type = lineElements.at(cols::TYPE + 1).trimmed();
         addRow(label, size, type);
     }
 
@@ -370,9 +370,9 @@ void MainWindow::saveSchema()
     // Get max size for padding
     for (int i = 0; i < model->rowCount(); ++i)
     {
-        labelLen = std::max(labelLen, model->item(i, 0)->text().length());
-        sizeLen = std::max(sizeLen, model->item(i, 1)->text().length());
-        typeLen = std::max(typeLen, model->item(i, 2)->text().length());
+        labelLen = std::max(labelLen, model->item(i, cols::LABEL)->text().length());
+        sizeLen = std::max(sizeLen, model->item(i, cols::SIZE)->text().length());
+        typeLen = std::max(typeLen, model->item(i, cols::TYPE)->text().length());
     }
     const QString tableFormat = QString("| %1 | %2 | %3 | %4 |\n");
     const QString seperFormat = QString("|-%1-|-%2-|-%3-|-%4-|\n");
@@ -388,9 +388,9 @@ void MainWindow::saveSchema()
 
     for (int i = 0; i < model->rowCount(); ++i)
     {
-        out << tableFormat.arg(model->item(i, 0)->text(), -labelLen)
-                              .arg(model->item(i, 1)->text(), -sizeLen)
-                              .arg(model->item(i, 2)->text(), -typeLen)
+        out << tableFormat.arg(model->item(i, cols::LABEL)->text(), -labelLen)
+                              .arg(model->item(i, cols::SIZE)->text(), -sizeLen)
+                              .arg(model->item(i, cols::TYPE)->text(), -typeLen)
                               .arg("", -descLen);
     }
 
@@ -445,21 +445,18 @@ void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
     if (index.column() == 3)
         return;
     switch(index.column()){
-    // Label
-    case 0:
+    case cols::LABEL:
         itemLabelChanged(item);
         break;
-    // Size
-    case 1:
+    case cols::SIZE:
         itemSizeChanged(item);
         setPreview(index);
         break;
-    // Type
-    case 2:
+    case cols::TYPE:
         itemTypeChanged(item);
         setPreview(index);
         break;
-    case 3:
+    case cols::PREVIEW:
         itemPreviewChanged(item);
         break;
     default:
@@ -487,7 +484,7 @@ void MainWindow::itemLabelChanged(QStandardItem * const label)
 
 void MainWindow::itemSizeChanged(QStandardItem * const size)
 {
-    QStandardItem *type = model->item(size->row(), 3);
+    QStandardItem *type = model->item(size->row(), cols::TYPE);
     if (typesDelegate->getCustomItems().contains(type->text()))
     {
         int entrySize = getEntrySize(size->row(), size->parent(), false);
@@ -523,9 +520,9 @@ void MainWindow::itemPreviewChanged(QStandardItem * const preview)
 
 void MainWindow::setPreview(const QModelIndex& index)
 {
-    QStandardItem *preview = model->item(index.row(), 3);
+    QStandardItem *preview = model->item(index.row(), cols::PREVIEW);
     int row = preview->row();
-    QString type = model->item(row, 2)->text();
+    QString type = model->item(row, cols::TYPE)->text();
     QString byteString = formatPreview(getCoveredSize(row),
                                        getEntrySize(row, preview->parent()),
                                        type);

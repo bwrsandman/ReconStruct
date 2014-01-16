@@ -17,6 +17,11 @@ const QStringList defaultTypes = QStringList() << "bytes" << "str"
                                                << "int" << "bool";
 const QStringList columns = QStringList() << "Label" << "Size"
                                           << "Type" << "Preview";
+namespace cols {
+enum {
+    LABEL, SIZE, TYPE, PREVIEW
+};
+}
 
 class MainWindow : public QMainWindow
 {
