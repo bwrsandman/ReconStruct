@@ -17,6 +17,7 @@ public:
                               const QStyleOptionViewItem &option,
                               const QModelIndex & index) const;
     void addItem(const QString);
+    inline QStringList &getCustomItems() { return customItems; }
 private:
     const QStringList items;
     QStringList customItems;

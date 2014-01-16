@@ -218,22 +218,33 @@ int MainWindow::parseSizeExpression(const QString text, const int row) const
  * Get text from size, split by operators,
  * substitute non-numbers and calculate
  */
-int MainWindow::getEntrySize(const int row) const
+int MainWindow::getEntrySize(const int row, QStandardItem *parent, bool fromChildren) const
 {
+    if (!parent)
+        parent = model->invisibleRootItem();
+    if (row < 0)
+        return 0;
     // Get the int representation of the size for the row
-    QString text = model->item(row, 1)->text();
+    QString text = parent->child(row, 1)->text();
     if (text.isEmpty()) {
         return 0;
     }
-    return parseSizeExpression(text, row);
+    int size = parseSizeExpression(text, row);
+    if (fromChildren && typesDelegate->getCustomItems().contains(parent->child(row, 2)->text()))
+    {
+        size *= getCoveredSize(size, parent->child(0));
+    }
+    return size;
 }
 
-int MainWindow::getCoveredSize(const int end) const
+int MainWindow::getCoveredSize(const int end, QStandardItem *parent) const
 {
+    if (!parent)
+        parent = model->invisibleRootItem();
     // Get the number of bytes covered by schema in tree
     int coveredSize = 0;
-    for (int i = 0; i < end; ++i)
-        coveredSize += getEntrySize(i);
+    for (int i = 0; i < end && i < parent->rowCount(); ++i)
+        coveredSize += getEntrySize(i, parent);
     return coveredSize;
 }
 
@@ -422,38 +433,136 @@ void MainWindow::addRow(QString labelText,
 
 void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
 {
+    if (!item)
+    {
+        return;
+    }
     QModelIndex index = model->indexFromItem(item);
+
+    bool isOrphan = !item->parent();
+
+    // If preview changed, ignore.
     if (index.column() == 3)
         return;
-    QStandardItem *size = model->item(index.row(), 1);
-    QStandardItem *type = model->item(index.row(), 2);
-    QStandardItem *preview = model->item(index.row(), 3);
-    QString byteString = formatPreview(getCoveredSize(index.row()),
-                                       getEntrySize(index.row()),
-                                       type->text());
-    preview->setText(byteString);
-    if (index.column() == 2 && type->text() == tr("custom"))
-    {
-        QString customType = QInputDialog::getText(this,
-                                                   tr("Enter custom datatype name"),
-                                                   tr("Enter custom datatype name"));
-        typesDelegate->addItem(customType);
-        type->setText(customType);
-
-        addRow("", "", "bytes", model->item(item->row()));
-        ui->treeView->expand(index);
+    switch(index.column()){
+    // Label
+    case 0:
+        itemLabelChanged(item);
+        break;
+    // Size
+    case 1:
+        itemSizeChanged(item);
+        setPreview(index);
+        break;
+    // Type
+    case 2:
+        itemTypeChanged(item);
+        setPreview(index);
+        break;
+    case 3:
+        itemPreviewChanged(item);
+        break;
+    default:
+        break;
     }
-    // Cascade changes to following rows
-    if (index.row() + 1 < model->rowCount())
+    // Create and set preview
+    QStandardItem *parent = model->item(item->row());
+    if (index.row() + 1 < parent->rowCount())
     {
         QStandardItem *nextRow = model->item(index.row() + 1, index.column());
         itemChanged(nextRow, false);
     }
+
     if (selectAfter)
     {
         selectionModel->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
         selectionChanged();
     }
+}
+
+void MainWindow::itemLabelChanged(QStandardItem * const label)
+{
+
+}
+
+void MainWindow::itemSizeChanged(QStandardItem * const size)
+{
+    QStandardItem *type = model->item(size->row(), 3);
+    if (typesDelegate->getCustomItems().contains(type->text()))
+    {
+        int entrySize = getEntrySize(size->row(), size->parent(), false);
+        if (entrySize != model->item(size->row())->rowCount())
+            balanceChildren(size);
+    }
+}
+
+void MainWindow::itemTypeChanged(QStandardItem * const type)
+{
+    // User selected custom, create new type
+    if (type->text() == tr("custom"))
+    {
+        createCustomType(type);
+    }
+    // Create subitems if item type is custom
+    if (typesDelegate->getCustomItems().contains(type->text()))
+    {
+        balanceChildren(type);
+    }
+    // Is not custom, clean up children
+    else
+    {
+        QModelIndex index = model->indexFromItem(type);
+        QStandardItem * item = model->item(index.row());
+        item->removeRows(0, item->rowCount());
+    }
+}
+
+void MainWindow::itemPreviewChanged(QStandardItem * const preview)
+{
+}
+
+void MainWindow::setPreview(const QModelIndex& index)
+{
+    QStandardItem *preview = model->item(index.row(), 3);
+    int row = preview->row();
+    QString type = model->item(row, 2)->text();
+    QString byteString = formatPreview(getCoveredSize(row),
+                                       getEntrySize(row, preview->parent()),
+                                       type);
+    preview->setText(byteString);
+}
+
+void MainWindow::createCustomType(QStandardItem* const type)
+{
+    QString customType = QInputDialog::getText(
+                this, tr("Enter custom datatype name"),
+                tr("Enter custom datatype name"));
+    typesDelegate->addItem(customType);
+    type->setText(customType);
+}
+
+/*
+ * Removes extra children and adds missing entries
+ *
+ */
+void MainWindow::balanceChildren(QStandardItem* const item)
+{
+    QStandardItem *parent = model->item(item->row());
+    parent->removeRows(0, parent->rowCount());
+    // Add additional objects to list
+    for (int i = parent->rowCount(); i < getEntrySize(item->row(), item->parent(), false); ++i)
+    {
+        QList<QStandardItem*> newItem = QList<QStandardItem*>();
+        newItem.append(new QStandardItem(QString("[%1]").arg(i)));
+        newItem.append(new QStandardItem());
+        newItem.append(new QStandardItem());
+        newItem.append(new QStandardItem());
+        parent->appendRow(newItem);
+        addRow("", "0x0", "bytes", newItem.at(0));
+    }
+    if (parent->rowCount())
+        ui->treeView->expand(parent->child(0)->index());
+    ui->treeView->expand(model->indexFromItem(item));
 }
 
 bool rowLessThan(const QModelIndex &lhs, const QModelIndex &rhs)
@@ -470,7 +579,8 @@ void MainWindow::selectionChanged()
         return;
     }
     int start = getCoveredSize(selectedRows.first().row());
-    int size = getEntrySize(selectedRows.last().row());
+    int size = getEntrySize(selectedRows.last().row(),
+                            model->itemFromIndex(selectedRows.last().parent()));
     if (selectedRows.length() > 1)
         size += getCoveredSize(selectedRows.last().row()) - start;
     ui->qHexEdit->setSelection(start, start + size);
