@@ -10,10 +10,7 @@
 #include "ui_mainwindow.h"
 #include "comboboxdelegate.h"
 
-#include "datatypebytes.h"
-#include "datatypebool.h"
-#include "datatypeint.h"
-#include "datatypestr.h"
+#include "datatypebase.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -89,21 +86,8 @@ void MainWindow::loadFile(const QString &fileName)
 
 QString MainWindow::formatPreview(const int start, const int end, const QString &type) const
 {
-    std::unique_ptr<DataTypeBase> typeInterpreter;
-    if (type == "bytes") {
-        typeInterpreter.reset(new DataTypeBytes());
-    } else if (type == "str"){
-        typeInterpreter.reset(new DataTypeStr());
-    } else if (type == "int"){
-        typeInterpreter.reset(new DataTypeInt());
-    } else if (type == "bool"){
-        typeInterpreter.reset(new DataTypeBool());
-    } else {
-        typeInterpreter.reset(new DataTypeBase());
-    }
-    QByteArray byteString = ui->qHexEdit->data().mid(start, end);
-    return typeInterpreter.get() ? typeInterpreter->format(byteString)
-                                 : QString();
+    const QByteArray byteString = ui->qHexEdit->data().mid(start, end);
+    return DataTypeBase::getInterpreter(type)->format(byteString);
 }
 
 int MainWindow::getSizeFromText(const QString text, const int end) const
