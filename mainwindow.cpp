@@ -4,10 +4,16 @@
 #include <QComboBox>
 #include <QStandardItemModel>
 #include <QItemSelectionModel>
+#include <memory>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "comboboxdelegate.h"
+
+#include "datatypebytes.h"
+#include "datatypebool.h"
+#include "datatypeint.h"
+#include "datatypestr.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -83,61 +89,21 @@ void MainWindow::loadFile(const QString &fileName)
 
 QString MainWindow::formatPreview(const int start, const int end, const QString &type) const
 {
-    QByteArray byteString = ui->qHexEdit->data().mid(start, end);
-    QString previewText;
+    std::unique_ptr<DataTypeBase> typeInterpreter;
     if (type == "bytes") {
-        previewText = formatBytes(byteString);
+        typeInterpreter.reset(new DataTypeBytes());
     } else if (type == "str"){
-        previewText = formatStr(byteString);
+        typeInterpreter.reset(new DataTypeStr());
     } else if (type == "int"){
-        previewText = formatInt(byteString);
+        typeInterpreter.reset(new DataTypeInt());
     } else if (type == "bool"){
-        previewText = formatBool(byteString);
+        typeInterpreter.reset(new DataTypeBool());
     } else {
-        previewText = tr("TODO: Preview unimplemented (%1)")
-                        .arg(formatBytes(byteString));
+        typeInterpreter.reset(new DataTypeBase());
     }
-    return previewText;
-}
-
-QString MainWindow::formatBytes(const QByteArray& byteString) const
-{
-    if (byteString.isEmpty())
-            return QString();
-    return "0x" + QString(byteString.toHex()).toUpper();
-
-}
-
-QString MainWindow::formatStr(const QByteArray& byteString) const
-{
-    if (byteString.isEmpty())
-            return QString();
-    return QString(byteString);
-
-}
-
-QString MainWindow::formatInt(const QByteArray& byteString) const
-{
-    if (byteString.isEmpty())
-            return QString();
-    bool ok = true;
-    // Reverse byte order
-    QByteArray reverse = QByteArray(byteString.length(), '\0');
-    std::reverse_copy(byteString.constBegin(), byteString.constEnd(),
-                      reverse.begin());
-    QString ret = QString::number(reverse.toHex().toInt(&ok, 16));
-    return ok? ret: tr("Error");
-
-}
-
-QString MainWindow::formatBool(const QByteArray& byteString) const
-{
-    if (byteString.isEmpty())
-            return QString("false");
-    bool ok = true;
-    QString ret = (byteString.toHex().toInt(&ok, 16))? "true" : "false";
-    return ok? ret: tr("Error");
-
+    QByteArray byteString = ui->qHexEdit->data().mid(start, end);
+    return typeInterpreter.get() ? typeInterpreter->format(byteString)
+                                 : QString();
 }
 
 int MainWindow::getSizeFromText(const QString text, const int end) const

@@ -10,15 +10,27 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = reconstruct
 TEMPLATE = app
+CONFIG += c++11
+QMAKE_CXXFLAGS += -std=c++11
 
 SOURCES += \
     main.cpp\
     mainwindow.cpp \
-    comboboxdelegate.cpp
+    comboboxdelegate.cpp \
+    datatypebase.cpp \
+    datatypeint.cpp \
+    datatypebytes.cpp \
+    datatypebool.cpp \
+    datatypestr.cpp
 
 HEADERS  += \
     mainwindow.h \
-    comboboxdelegate.h
+    comboboxdelegate.h \
+    datatypebase.h \
+    datatypeint.h \
+    datatypebytes.h \
+    datatypebool.h \
+    datatypestr.h
 
 FORMS    += \
     mainwindow.ui

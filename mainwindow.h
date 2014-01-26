@@ -43,10 +43,6 @@ private:
     void loadFile(const QString &fileName);
     QString formatPreview(const int start, const int end,
                           const QString& type) const;
-    QString formatBytes(const QByteArray& byteString) const;
-    QString formatStr(const QByteArray& byteString) const;
-    QString formatInt(const QByteArray& byteString) const;
-    QString formatBool(const QByteArray& byteString) const;
     void itemLabelChanged(QStandardItem * const);
     void itemSizeChanged(QStandardItem * const);
     void itemTypeChanged(QStandardItem * const);
