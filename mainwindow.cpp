@@ -387,13 +387,24 @@ void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
     {
         return;
     }
+    QStandardItem* parent = item->parent();
+    if (parent)
+    {
+        QStandardItem* grandParent = parent->parent();
+        if (grandParent)
+        {
+            QModelIndex grandParentIndex = model->indexFromItem(grandParent);
+            QString grandParentType = model->item(grandParentIndex.row(), cols::TYPE)->text();
+            return;
+        }
+        else // Is index number ex: [1]
+        {
+            return;
+        }
+    }
+
     QModelIndex index = model->indexFromItem(item);
 
-    bool isOrphan = !item->parent();
-
-    // If preview changed, ignore.
-    if (index.column() == 3)
-        return;
     switch(index.column()){
     case cols::LABEL:
         itemLabelChanged(item);
@@ -408,13 +419,15 @@ void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
         break;
     case cols::PREVIEW:
         itemPreviewChanged(item);
+        return;
         break;
     default:
         break;
     }
+
+    QStandardItem* rowRoot = model->item(item->row());
     // Create and set preview
-    QStandardItem *parent = model->item(item->row());
-    if (index.row() + 1 < parent->rowCount())
+    if (rowRoot && index.row() + 1 < rowRoot->rowCount())
     {
         QStandardItem *nextRow = model->item(index.row() + 1, index.column());
         itemChanged(nextRow, false);
@@ -439,7 +452,9 @@ void MainWindow::itemSizeChanged(QStandardItem * const size)
     {
         int entrySize = getEntrySize(size->row(), size->parent(), false);
         if (entrySize != model->item(size->row())->rowCount())
+        {
             balanceChildren(size);
+        }
     }
 }
 
@@ -494,20 +509,32 @@ void MainWindow::createCustomType(QStandardItem* const type)
  */
 void MainWindow::balanceChildren(QStandardItem* const item)
 {
+    int desiredRowCount = getEntrySize(item->row(), item->parent(), false);
     QStandardItem *parent = model->item(item->row());
-    parent->removeRows(0, parent->rowCount());
-    // Add additional objects to list
-    for (int i = parent->rowCount(); i < getEntrySize(item->row(), item->parent(), false); ++i)
+    int parentRowCount = parent->rowCount();
+    // Remove extra rows
+    parent->removeRows(desiredRowCount, parentRowCount - desiredRowCount);
+    // Add additional desired amount of rows back
+    for (int i = parent->rowCount(); i < desiredRowCount; ++i)
     {
-        QList<QStandardItem*> newItem = QList<QStandardItem*>();
-        newItem.append(new QStandardItem(QString("[%1]").arg(i)));
-        newItem.append(new QStandardItem());
-        newItem.append(new QStandardItem());
-        newItem.append(new QStandardItem());
-        parent->appendRow(newItem);
-        addRow("", "0x0", "bytes", newItem.at(0));
+        // Displays index in for form of "[1]"
+        QList<QStandardItem*> indexRow;
+        indexRow << new QStandardItem(QString("[%1]").arg(i));
+        indexRow << new QStandardItem();
+        indexRow << new QStandardItem();
+        indexRow << new QStandardItem();
+
+        // Copy of custom data type description
+        QList<QStandardItem*> dataRow;
+        dataRow << new QStandardItem();
+        dataRow << new QStandardItem("0x0");
+        dataRow << new QStandardItem("bytes");
+        dataRow << new QStandardItem();
+
+        indexRow.first()->appendRow(dataRow);
+        parent->appendRow(indexRow);
     }
-    if (parent->rowCount())
+    if (desiredRowCount)
         ui->treeView->expand(parent->child(0)->index());
     ui->treeView->expand(model->indexFromItem(item));
 }
