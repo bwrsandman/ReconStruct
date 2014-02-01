@@ -1,22 +1,16 @@
 #include <QFileDialog>
-#include <QInputDialog>
 #include <QMessageBox>
-#include <QComboBox>
 #include <QStandardItemModel>
-#include <QItemSelectionModel>
 #include <memory>
 
+#include "comboboxdelegate.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "comboboxdelegate.h"
-
-#include "datatypebase.h"
+#include "deconstructview.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    model(new QStandardItemModel()),
-    selectionModel(new QItemSelectionModel(model.get(), this)),
     currentFile(QString())
 {
     ui->setupUi(this);
@@ -28,39 +22,18 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(saveSchema()));
     connect(ui->action_Add, SIGNAL(triggered()),
             this, SLOT(addRow()));
-    connect(model.get(), SIGNAL(itemChanged(QStandardItem*)),
+    deconstructView.reset(new DeconstructView(ui->treeView,
+                                              ui->qHexEdit));
+    connect(deconstructView->getModelPtr(),
+            SIGNAL(itemChanged(QStandardItem*)),
             this, SLOT(itemChanged(QStandardItem*)));
-    connect(selectionModel.get(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+    connect(deconstructView->getSelectionModelPtr(),
+            SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
             this, SLOT(selectionChanged()));
-    setModel();
 }
 
 MainWindow::~MainWindow()
 {
-}
-
-void MainWindow::setModel()
-{
-    QStandardItem *lbl_label = new QStandardItem(tr("Label"));
-    model->setHorizontalHeaderItem(cols::LABEL, lbl_label);
-
-    QStandardItem *lbl_size = new QStandardItem(tr("Size"));
-    model->setHorizontalHeaderItem(cols::SIZE, lbl_size);
-
-    QStandardItem *lbl_type = new QStandardItem(tr("Type"));
-    model->setHorizontalHeaderItem(cols::TYPE, lbl_type);
-    typesDelegate.reset(new ComboBoxDelegate(ui->treeView, defaultTypes));
-    ui->treeView->setItemDelegateForColumn(cols::TYPE, typesDelegate.get());
-
-    QStandardItem *lbl_prev = new QStandardItem(tr("Preview"));
-    model->setHorizontalHeaderItem(cols::PREVIEW, lbl_prev);
-
-    ui->treeView->setModel(model.get());
-    ui->treeView->setSelectionModel(selectionModel.get());
-    ui->treeView->setColumnWidth(cols::LABEL, 100);
-    ui->treeView->setColumnWidth(cols::SIZE, 50);
-    ui->treeView->setColumnWidth(cols::TYPE, 55);
-    ui->treeView->setColumnWidth(cols::PREVIEW, 20);
 }
 
 void MainWindow::loadFile(const QString &fileName)
@@ -79,130 +52,7 @@ void MainWindow::loadFile(const QString &fileName)
     QApplication::restoreOverrideCursor();
 
     setCurrentFile(fileName);
-    refreshPreview();
-}
-
-QString MainWindow::formatPreview(const int start, const int end, const QString &type) const
-{
-    const QByteArray byteString = ui->qHexEdit->data().mid(start, end);
-    return DataTypeBase::getInterpreter(type)->format(byteString);
-}
-
-int MainWindow::getSizeFromText(const QString text, const int end) const
-{
-    bool ok;
-    int res = 0;
-    const QString trimmed = text.trimmed();
-    for (int i = end - 1; i >= 0; --i)
-    {
-        if(model->item(i, cols::LABEL)->text() == trimmed)
-        {
-            res = model->item(i, cols::PREVIEW)->text().toInt(&ok, 0);
-            break;
-        }
-    }
-    return res;
-}
-
-int MainWindow::parseSizeElement(const QString text, const int row) const
-{
-    bool ok;
-    int res = text.toInt(&ok, 0);
-    if (ok) {
-        return res;
-    } else {
-        return getSizeFromText(text, row);
-    }
-}
-
-int MainWindow::parseEquals(const QString text, const int row) const
-{
-    QStringList elementList = text.split("==");
-    int res = parseSizeElement(elementList.first(), row);
-    for (int k = 1; k < elementList.length(); ++k)
-    {
-        QString element = elementList.at(k);
-        res = res == parseSizeElement(element, row);
-    }
-    return res;
-}
-
-int MainWindow::parseNequals(const QString text, const int row) const
-{
-    QStringList elementList = text.split("!=");
-    int res = parseEquals(elementList.first(), row);
-    for (int k = 1; k < elementList.length(); ++k)
-    {
-        QString element = elementList.at(k);
-        res = res != parseEquals(element, row);
-    }
-    return res;
-}
-
-int MainWindow::parseProduct(const QString text, const int row) const
-{
-    QStringList elementList = text.split("*");
-    int res = parseNequals(elementList.first(), row);
-    for (int k = 1; k < elementList.length(); ++k)
-    {
-        QString element = elementList.at(k);
-        res *= parseNequals(element, row);
-    }
-    return res;
-}
-
-/*
- * Basic operations are allowed:
- * products (*), not-equals (!=) and equals (==)
- * they are calculated with equals first, not-equals, second
- * and products last
- */
-int MainWindow::parseSizeExpression(const QString text, const int row) const
-{
-    return parseProduct(text, row);
-}
-
-/*
- * Get text from size, split by operators,
- * substitute non-numbers and calculate
- */
-int MainWindow::getEntrySize(const int row, QStandardItem *parent, bool fromChildren) const
-{
-    if (!parent)
-        parent = model->invisibleRootItem();
-    if (row < 0)
-        return 0;
-    // Get the int representation of the size for the row
-    QString text = parent->child(row, 1)->text();
-    if (text.isEmpty()) {
-        return 0;
-    }
-    int size = parseSizeExpression(text, row);
-    if (fromChildren && typesDelegate->getCustomItems().contains(parent->child(row, cols::TYPE)->text()))
-    {
-        size *= getCoveredSize(size, parent->child(0));
-    }
-    return size;
-}
-
-int MainWindow::getCoveredSize(const int end, QStandardItem *parent) const
-{
-    if (!parent)
-        parent = model->invisibleRootItem();
-    // Get the number of bytes covered by schema in tree
-    int coveredSize = 0;
-    for (int i = 0; i < end && i < parent->rowCount(); ++i)
-        coveredSize += getEntrySize(i, parent);
-    return coveredSize;
-}
-
-int MainWindow::getSelectionSize() const
-{
-    // Find a selection size for the next field based on qHexedit cursor
-    // position, if position is already covered, default to 0
-    int curPosition = ui->qHexEdit->cursorPosition();
-    int coveredSize = getCoveredSize(model->rowCount());
-    return (curPosition > coveredSize)? curPosition - coveredSize: 0;
+    deconstructView->refreshPreview();
 }
 
 void MainWindow::setCurrentFile(const QString &fileName)
@@ -217,12 +67,6 @@ void MainWindow::setCurrentSchemaFile(const QString &fileName)
     currentSchemaFile = QFileInfo(fileName).canonicalFilePath();
     setWindowModified(false);
     setWindowFilePath(currentSchemaFile);
-}
-
-void MainWindow::refreshPreview()
-{
-    if (model->rowCount() > 0)
-        itemChanged(model->item(0), false);
 }
 
 /*
@@ -260,8 +104,8 @@ void MainWindow::loadSchema()
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     // Clear treeView
-    ui->treeView->setEnabled(true);
-    model->removeRows(0, model->rowCount());
+    deconstructView->setEnabled(true);
+    deconstructView->clearRows();
 
     // Read first two lines
     if (!file.atEnd())
@@ -285,7 +129,7 @@ void MainWindow::loadSchema()
     QApplication::restoreOverrideCursor();
 
     setCurrentSchemaFile(fileName);
-    refreshPreview();
+    deconstructView->refreshPreview();
 }
 
 void MainWindow::saveSchema()
@@ -316,11 +160,14 @@ void MainWindow::saveSchema()
         descLen = descTitle.length();
 
     // Get max size for padding
-    for (int i = 0; i < model->rowCount(); ++i)
+    for (int i = 0; i < deconstructView->rowCount(); ++i)
     {
-        labelLen = std::max(labelLen, model->item(i, cols::LABEL)->text().length());
-        sizeLen = std::max(sizeLen, model->item(i, cols::SIZE)->text().length());
-        typeLen = std::max(typeLen, model->item(i, cols::TYPE)->text().length());
+        labelLen = std::max(labelLen,
+                            deconstructView->labelAt(i).length());
+        sizeLen = std::max(sizeLen,
+                           deconstructView->sizeAt(i).length());
+        typeLen = std::max(typeLen,
+                           deconstructView->typeAt(i).length());
     }
     const QString tableFormat = QString("| %1 | %2 | %3 | %4 |\n");
     const QString seperFormat = QString("|-%1-|-%2-|-%3-|-%4-|\n");
@@ -334,11 +181,11 @@ void MainWindow::saveSchema()
                       .arg("", -typeLen, '-')
                       .arg("", -descLen, '-');
 
-    for (int i = 0; i < model->rowCount(); ++i)
+    for (int i = 0; i < deconstructView->rowCount(); ++i)
     {
-        out << tableFormat.arg(model->item(i, cols::LABEL)->text(), -labelLen)
-                              .arg(model->item(i, cols::SIZE)->text(), -sizeLen)
-                              .arg(model->item(i, cols::TYPE)->text(), -typeLen)
+        out << tableFormat.arg(deconstructView->labelAt(i), -labelLen)
+                              .arg(deconstructView->sizeAt(i), -sizeLen)
+                              .arg(deconstructView->typeAt(i), -typeLen)
                               .arg("", -descLen);
     }
 
@@ -355,186 +202,12 @@ void MainWindow::addRow(QString labelText,
 {
     if (currentFile.isEmpty())
         return;
-    if (!rootItem)
-        rootItem = model->invisibleRootItem();
-    // Create new row(label, size, type, preview)
-    QList<QStandardItem*> newRow;
-    QStandardItem *label = new QStandardItem(labelText);
-    newRow.push_back(label);
-    // Default size is position of cursor on hex view
-    if (sizeText.isEmpty()) {
-        int size = getSelectionSize();
-        sizeText = "0x" + QString::number(size, 16).toUpper();
-    }
-    newRow.push_back(new QStandardItem(sizeText));
-    // Default datatype is bytes
-    newRow.push_back(new QStandardItem(typeText));
-    // Preview column is non-editable
-    QStandardItem *preview = new QStandardItem();
-    preview->setEditable(false);
-    newRow.push_back(preview);
-    // Add item and put in edit mode
-    // Put as child of selected item if there is only one
-    rootItem->appendRow(newRow);
-    ui->treeView->edit(model->indexFromItem(label));
+    deconstructView->addRow(labelText, sizeText, typeText, rootItem);
 }
 
 void MainWindow::itemChanged(QStandardItem *item, bool selectAfter)
 {
-    if (!item)
-    {
-        return;
-    }
-    QStandardItem* parent = item->parent();
-    if (parent)
-    {
-        QStandardItem* grandParent = parent->parent();
-        if (grandParent)
-        {
-            QModelIndex grandParentIndex = model->indexFromItem(grandParent);
-            QString grandParentType = model->item(grandParentIndex.row(), cols::TYPE)->text();
-            return;
-        }
-        else // Is index number ex: [1]
-        {
-            return;
-        }
-    }
-
-    QModelIndex index = model->indexFromItem(item);
-
-    switch(index.column()){
-    case cols::LABEL:
-        itemLabelChanged(item);
-        break;
-    case cols::SIZE:
-        itemSizeChanged(item);
-        setPreview(index);
-        break;
-    case cols::TYPE:
-        itemTypeChanged(item);
-        setPreview(index);
-        break;
-    case cols::PREVIEW:
-        itemPreviewChanged(item);
-        return;
-        break;
-    default:
-        break;
-    }
-
-    QStandardItem* rowRoot = model->item(item->row());
-    // Create and set preview
-    if (rowRoot && index.row() + 1 < rowRoot->rowCount())
-    {
-        QStandardItem *nextRow = model->item(index.row() + 1, index.column());
-        itemChanged(nextRow, false);
-    }
-
-    if (selectAfter)
-    {
-        selectionModel->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-        selectionChanged();
-    }
-}
-
-void MainWindow::itemLabelChanged(QStandardItem * const label)
-{
-
-}
-
-void MainWindow::itemSizeChanged(QStandardItem * const size)
-{
-    QStandardItem *type = model->item(size->row(), cols::TYPE);
-    if (typesDelegate->getCustomItems().contains(type->text()))
-    {
-        int entrySize = getEntrySize(size->row(), size->parent(), false);
-        if (entrySize != model->item(size->row())->rowCount())
-        {
-            balanceChildren(size);
-        }
-    }
-}
-
-void MainWindow::itemTypeChanged(QStandardItem * const type)
-{
-    // User selected custom, create new type
-    if (type->text() == tr("custom"))
-    {
-        createCustomType(type);
-    }
-    // Create subitems if item type is custom
-    if (typesDelegate->getCustomItems().contains(type->text()))
-    {
-        balanceChildren(type);
-    }
-    // Is not custom, clean up children
-    else
-    {
-        QModelIndex index = model->indexFromItem(type);
-        QStandardItem * item = model->item(index.row());
-        item->removeRows(0, item->rowCount());
-    }
-}
-
-void MainWindow::itemPreviewChanged(QStandardItem * const preview)
-{
-}
-
-void MainWindow::setPreview(const QModelIndex& index)
-{
-    QStandardItem *preview = model->item(index.row(), cols::PREVIEW);
-    int row = preview->row();
-    QString type = model->item(row, cols::TYPE)->text();
-    QString byteString = formatPreview(getCoveredSize(row),
-                                       getEntrySize(row, preview->parent()),
-                                       type);
-    preview->setText(byteString);
-}
-
-void MainWindow::createCustomType(QStandardItem* const type)
-{
-    QString customType = QInputDialog::getText(
-                this, tr("Enter custom datatype name"),
-                tr("Enter custom datatype name"));
-    typesDelegate->addItem(customType);
-    type->setText(customType);
-}
-
-/*
- * Removes extra children and adds missing entries
- *
- */
-void MainWindow::balanceChildren(QStandardItem* const item)
-{
-    int desiredRowCount = getEntrySize(item->row(), item->parent(), false);
-    QStandardItem *parent = model->item(item->row());
-    int parentRowCount = parent->rowCount();
-    // Remove extra rows
-    parent->removeRows(desiredRowCount, parentRowCount - desiredRowCount);
-    // Add additional desired amount of rows back
-    for (int i = parent->rowCount(); i < desiredRowCount; ++i)
-    {
-        // Displays index in for form of "[1]"
-        QList<QStandardItem*> indexRow;
-        indexRow << new QStandardItem(QString("[%1]").arg(i));
-        indexRow << new QStandardItem();
-        indexRow << new QStandardItem();
-        indexRow << new QStandardItem();
-
-        // Copy of custom data type description
-        QList<QStandardItem*> dataRow;
-        dataRow << new QStandardItem();
-        dataRow << new QStandardItem("0x0");
-        dataRow << new QStandardItem("bytes");
-        dataRow << new QStandardItem();
-
-        indexRow.first()->appendRow(dataRow);
-        parent->appendRow(indexRow);
-    }
-    if (desiredRowCount)
-        ui->treeView->expand(parent->child(0)->index());
-    ui->treeView->expand(model->indexFromItem(item));
+    deconstructView->itemChanged(item, selectAfter);
 }
 
 bool rowLessThan(const QModelIndex &lhs, const QModelIndex &rhs)
@@ -544,16 +217,5 @@ bool rowLessThan(const QModelIndex &lhs, const QModelIndex &rhs)
 
 void MainWindow::selectionChanged()
 {
-    QModelIndexList selectedRows = selectionModel->selectedRows();
-    if (selectedRows.isEmpty())
-    {
-        ui->qHexEdit->setSelection(0, 0);
-        return;
-    }
-    int start = getCoveredSize(selectedRows.first().row());
-    int size = getEntrySize(selectedRows.last().row(),
-                            model->itemFromIndex(selectedRows.last().parent()));
-    if (selectedRows.length() > 1)
-        size += getCoveredSize(selectedRows.last().row()) - start;
-    ui->qHexEdit->setSelection(start, start + size);
+    deconstructView->selectionChanged();
 }
