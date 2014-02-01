@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     model(new QStandardItemModel()),
-    selectionModel(new QItemSelectionModel(model, this)),
+    selectionModel(new QItemSelectionModel(model.get(), this)),
     currentFile(QString())
 {
     ui->setupUi(this);
@@ -28,17 +28,15 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(saveSchema()));
     connect(ui->action_Add, SIGNAL(triggered()),
             this, SLOT(addRow()));
-    connect(model, SIGNAL(itemChanged(QStandardItem*)),
+    connect(model.get(), SIGNAL(itemChanged(QStandardItem*)),
             this, SLOT(itemChanged(QStandardItem*)));
-    connect(selectionModel, SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+    connect(selectionModel.get(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
             this, SLOT(selectionChanged()));
     setModel();
 }
 
 MainWindow::~MainWindow()
 {
-    delete model;
-    delete ui;
 }
 
 void MainWindow::setModel()
@@ -51,14 +49,14 @@ void MainWindow::setModel()
 
     QStandardItem *lbl_type = new QStandardItem(tr("Type"));
     model->setHorizontalHeaderItem(cols::TYPE, lbl_type);
-    typesDelegate = new ComboBoxDelegate(ui->treeView, defaultTypes);
-    ui->treeView->setItemDelegateForColumn(cols::TYPE, typesDelegate);
+    typesDelegate.reset(new ComboBoxDelegate(ui->treeView, defaultTypes));
+    ui->treeView->setItemDelegateForColumn(cols::TYPE, typesDelegate.get());
 
     QStandardItem *lbl_prev = new QStandardItem(tr("Preview"));
     model->setHorizontalHeaderItem(cols::PREVIEW, lbl_prev);
 
-    ui->treeView->setModel(model);
-    ui->treeView->setSelectionModel(selectionModel);
+    ui->treeView->setModel(model.get());
+    ui->treeView->setSelectionModel(selectionModel.get());
     ui->treeView->setColumnWidth(cols::LABEL, 100);
     ui->treeView->setColumnWidth(cols::SIZE, 50);
     ui->treeView->setColumnWidth(cols::TYPE, 55);

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QItemSelection>
+#include <memory>
 
 namespace Ui {
 class MainWindow;
@@ -32,10 +33,10 @@ public:
     ~MainWindow();
 
 private:
-    Ui::MainWindow *ui;
-    QStandardItemModel *model;
-    QItemSelectionModel* selectionModel;
-    ComboBoxDelegate *typesDelegate;
+    std::unique_ptr<Ui::MainWindow> ui;
+    std::unique_ptr<QStandardItemModel> model;
+    std::unique_ptr<QItemSelectionModel> selectionModel;
+    std::unique_ptr<ComboBoxDelegate> typesDelegate;
     QString currentFile;
     QString currentSchemaFile;
 
