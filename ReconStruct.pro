@@ -22,7 +22,8 @@ SOURCES += \
     datatypebytes.cpp \
     datatypebool.cpp \
     datatypestr.cpp \
-    deconstructview.cpp
+    deconstructview.cpp \
+    datatypecustom.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -32,7 +33,8 @@ HEADERS  += \
     datatypebytes.h \
     datatypebool.h \
     datatypestr.h \
-    deconstructview.h
+    deconstructview.h \
+    datatypecustom.h
 
 FORMS    += \
     mainwindow.ui

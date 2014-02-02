@@ -6,6 +6,7 @@
 
 #include "comboboxdelegate.h"
 #include "datatypebase.h"
+#include "datatypecustom.h"
 #include "mainwindow.h" /* For tr() */
 
 #include "deconstructview.h"
@@ -43,6 +44,8 @@ void DeconstructView::setModel()
     mTreeView->setColumnWidth(cols::SIZE, 50);
     mTreeView->setColumnWidth(cols::TYPE, 55);
     mTreeView->setColumnWidth(cols::PREVIEW, 20);
+
+    DataTypeCustom::declaredTypes = QHash<QString, DataTypeCustom*>();
 }
 
 void DeconstructView::itemLabelChanged(QStandardItem * const)
@@ -71,7 +74,7 @@ void DeconstructView::itemTypeChanged(QStandardItem * const type)
         createCustomType(type);
     }
     // Create subitems if item type is custom
-    if (mTypesDelegate->getCustomItems().contains(type->text()))
+    else if (mTypesDelegate->getCustomItems().contains(type->text()))
     {
         balanceChildren(type);
     }
@@ -198,14 +201,20 @@ void DeconstructView::balanceChildren(QStandardItem * const item)
         indexRow << new QStandardItem();
         indexRow << new QStandardItem();
 
-        // Copy of custom data type description
-        QList<QStandardItem*> dataRow;
-        dataRow << new QStandardItem();
-        dataRow << new QStandardItem("0x0");
-        dataRow << new QStandardItem("bytes");
-        dataRow << new QStandardItem();
-
-        indexRow.first()->appendRow(dataRow);
+        QString typeName = item->text();
+        DataTypeCustom* customType = DataTypeCustom::declaredTypes[typeName];
+        if (customType) {
+            foreach (DataTypeBase* dataType, customType->getContents()) {
+                // Copy of custom data type description
+                QList<QStandardItem*> dataRow;
+                dataRow << new QStandardItem();
+                dataRow << new QStandardItem("0x" +
+                               QString::number(dataType->getSize(), 16));
+                dataRow << new QStandardItem(dataType->getTypeName());
+                dataRow << new QStandardItem();
+                indexRow.first()->appendRow(dataRow);
+            }
+        }
         parent->appendRow(indexRow);
     }
     if (desiredRowCount)
@@ -218,6 +227,10 @@ void DeconstructView::createCustomType(QStandardItem * const type)
     QString customType = QInputDialog::getText(
                 mTreeView.get(), MainWindow::tr("Enter custom datatype name"),
                 MainWindow::tr("Enter custom datatype name"));
+    // Create custom type entry before modifying model
+    delete DataTypeCustom::declaredTypes[customType];
+    DataTypeCustom::declaredTypes[customType] = new DataTypeCustom(customType);
+    // Modify model
     mTypesDelegate->addItem(customType);
     type->setText(customType);
 }
@@ -296,7 +309,8 @@ QString DeconstructView::formatPreview(const int start, const int end,
                                        const QString &type) const
 {
     const QByteArray byteString = mHexEdit->data().mid(start, end);
-    return DataTypeBase::getInterpreter(type)->format(byteString);
+    std::unique_ptr<DataTypeBase> interp = DataTypeBase::getInterpreter(type);
+    return interp? interp->format(byteString): "";
 }
 
 int DeconstructView::parseSizeElement(const QString text, const int row) const

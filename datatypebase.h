@@ -6,14 +6,18 @@
 
 class DataTypeBase
 {
+protected:
+    const QString mTypeName = "ERROR: BaseType";
+    int mSize = 0;
+    virtual QString formatByteString(const QByteArray& byteString) const;
 public:
-    DataTypeBase();
+    DataTypeBase(int size=0);
     virtual ~DataTypeBase();
     virtual QString format(const QByteArray& byteString) const;
     static std::unique_ptr<DataTypeBase> getInterpreter(const QString& type);
+    virtual int getSize() { return mSize; }
+    virtual QString getTypeName() { return mTypeName; }
 
-protected:
-    virtual QString formatByteString(const QByteArray& byteString) const;
 };
 
 #endif // DATATYPEBASE_H

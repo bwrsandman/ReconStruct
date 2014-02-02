@@ -2,8 +2,8 @@
 
 #include "mainwindow.h" /* For tr() */
 
-DataTypeInt::DataTypeInt()
-    : DataTypeBase()
+DataTypeInt::DataTypeInt(int size)
+    : DataTypeBase(size)
 {
 }
 

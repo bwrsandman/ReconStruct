@@ -7,7 +7,8 @@
 #include "datatypeint.h"
 #include "datatypestr.h"
 
-DataTypeBase::DataTypeBase()
+DataTypeBase::DataTypeBase(int size)
+    :mSize(size)
 {
 }
 
@@ -41,7 +42,7 @@ std::unique_ptr<DataTypeBase> DataTypeBase::getInterpreter(const QString &type)
     } else if (type == "bool"){
         typeInterpreter.reset(new DataTypeBool());
     } else {
-        typeInterpreter.reset(new DataTypeBase());
+        typeInterpreter.reset();
     }
     return typeInterpreter;
 }

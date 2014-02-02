@@ -1,7 +1,7 @@
 #include "datatypebytes.h"
 
-DataTypeBytes::DataTypeBytes()
-    : DataTypeBase()
+DataTypeBytes::DataTypeBytes(int size)
+    : DataTypeBase(size)
 {
 }
 
@@ -13,4 +13,3 @@ QString DataTypeBytes::format(const QByteArray &byteString) const
 {
     return formatByteString(byteString);
 }
-

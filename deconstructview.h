@@ -3,6 +3,11 @@
 
 #include <memory>
 
+#include "datatypebytes.h"
+#include "datatypestr.h"
+#include "datatypeint.h"
+#include "datatypebool.h"
+
 class ComboBoxDelegate;
 class QItemSelectionModel;
 class QHexEdit;
@@ -11,8 +16,10 @@ class QStandardItem;
 class QStandardItemModel;
 class QTreeView;
 
-const QStringList defaultTypes =
-        QStringList() << "bytes" << "str" << "int" << "bool";
+const QStringList defaultTypes = QStringList() << DataTypeBytes().getTypeName()
+                                               << DataTypeStr().getTypeName()
+                                               << DataTypeInt().getTypeName()
+                                               << DataTypeBool().getTypeName();
 const QStringList columns = QStringList()
         << "Label" << "Size" << "Type" << "Preview";
 
@@ -58,7 +65,7 @@ public:
     void selectionChanged();
     void addRow(QString labelText=QString(),
                 QString sizeText=QString(),
-                QString typeText=QString("bytes"),
+                QString typeText=DataTypeBytes().getTypeName(),
                 QStandardItem *rootItem=0);
     void removeRows(int start, int count);
     inline void clearRows() { removeRows(0, rowCount()); }

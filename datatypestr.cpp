@@ -1,7 +1,7 @@
 #include "datatypestr.h"
 
-DataTypeStr::DataTypeStr()
-    : DataTypeBase()
+DataTypeStr::DataTypeStr(int size)
+    : DataTypeBase(size)
 {
 }
 
