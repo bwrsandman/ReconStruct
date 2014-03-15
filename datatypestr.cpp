@@ -1,7 +1,7 @@
 #include "datatypestr.h"
 
-DataTypeStr::DataTypeStr(int size)
-    : DataTypeBase(size)
+DataTypeStr::DataTypeStr(QString label, QString size)
+    : DataTypeBase(label, size)
 {
 }
 

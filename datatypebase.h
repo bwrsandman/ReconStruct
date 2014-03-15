@@ -8,14 +8,16 @@ class DataTypeBase
 {
 protected:
     const QString mTypeName = "ERROR: BaseType";
-    int mSize = 0;
+    QString mLabel = "";
+    QString mSize = "";
     virtual QString formatByteString(const QByteArray& byteString) const;
 public:
-    DataTypeBase(int size=0);
+    DataTypeBase(QString label="", QString size="");
     virtual ~DataTypeBase();
     virtual QString format(const QByteArray& byteString) const;
-    static std::unique_ptr<DataTypeBase> getInterpreter(const QString& type);
-    virtual int getSize() { return mSize; }
+    static std::unique_ptr<DataTypeBase> getInterpreter(const QString& type, const QString &label="", const QString &string="");
+    virtual QString getLabel() { return mLabel; }
+    virtual QString getSize() { return mSize.isEmpty()? "0x0" : mSize; }
     virtual QString getTypeName() { return mTypeName; }
 
 };

@@ -8,7 +8,7 @@ class DataTypeBytes : public DataTypeBase
 protected:
     const QString mTypeName = "bytes";
 public:
-    DataTypeBytes(int size=0);
+    DataTypeBytes(QString label="", QString size="");
     virtual ~DataTypeBytes();
 
     virtual QString format(const QByteArray& byteString) const;

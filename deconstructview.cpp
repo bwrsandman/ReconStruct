@@ -105,8 +105,10 @@ void DeconstructView::itemChanged(QStandardItem *item, bool selectAfter)
         if (grandParent)
         {
             QModelIndex grandParentIndex = mModel->indexFromItem(grandParent);
-            QString grandParentType = mModel->item(grandParentIndex.row(),
-                                                   cols::TYPE)->text();
+            QString grandParentTypeName = mModel->item(grandParentIndex.row(), cols::TYPE)->text();
+            DataTypeCustom* grandParentType = DataTypeCustom::declaredTypes[grandParentTypeName];
+            grandParentType->update(parent);
+            balanceChildren(grandParent);
             return;
         }
         else // Is index number ex: [1]
@@ -190,9 +192,9 @@ void DeconstructView::balanceChildren(QStandardItem * const item)
     QStandardItem *parent = mModel->item(item->row());
     int parentRowCount = parent->rowCount();
     // Remove extra rows
-    parent->removeRows(desiredRowCount, parentRowCount - desiredRowCount);
+    parent->removeRows(0, parentRowCount);
     // Add additional desired amount of rows back
-    for (int i = parent->rowCount(); i < desiredRowCount; ++i)
+    for (int i = 0; i < desiredRowCount; ++i)
     {
         // Displays index in for form of "[1]"
         QList<QStandardItem*> indexRow;
@@ -201,15 +203,14 @@ void DeconstructView::balanceChildren(QStandardItem * const item)
         indexRow << new QStandardItem();
         indexRow << new QStandardItem();
 
-        QString typeName = item->text();
+        QString typeName = mModel->item(item->row(), cols::TYPE)->text();
         DataTypeCustom* customType = DataTypeCustom::declaredTypes[typeName];
         if (customType) {
             foreach (DataTypeBase* dataType, customType->getContents()) {
                 // Copy of custom data type description
                 QList<QStandardItem*> dataRow;
-                dataRow << new QStandardItem();
-                dataRow << new QStandardItem("0x" +
-                               QString::number(dataType->getSize(), 16));
+                dataRow << new QStandardItem(dataType->getLabel());
+                dataRow << new QStandardItem(dataType->getSize());
                 dataRow << new QStandardItem(dataType->getTypeName());
                 dataRow << new QStandardItem();
                 indexRow.first()->appendRow(dataRow);

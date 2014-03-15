@@ -7,6 +7,7 @@
 #include "datatypestr.h"
 #include "datatypeint.h"
 #include "datatypebool.h"
+#include "misc.h"
 
 class ComboBoxDelegate;
 class QItemSelectionModel;
@@ -22,12 +23,6 @@ const QStringList defaultTypes = QStringList() << DataTypeBytes().getTypeName()
                                                << DataTypeBool().getTypeName();
 const QStringList columns = QStringList()
         << "Label" << "Size" << "Type" << "Preview";
-
-namespace cols {
-enum {
-    LABEL, SIZE, TYPE, PREVIEW
-};
-}
 
 class DeconstructView
 {

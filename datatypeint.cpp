@@ -2,8 +2,8 @@
 
 #include "mainwindow.h" /* For tr() */
 
-DataTypeInt::DataTypeInt(int size)
-    : DataTypeBase(size)
+DataTypeInt::DataTypeInt(QString label, QString size)
+    : DataTypeBase(label, size)
 {
 }
 

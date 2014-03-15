@@ -8,7 +8,7 @@ class DataTypeInt : public DataTypeBase
 protected:
     const QString mTypeName = "int";
 public:
-    DataTypeInt(int size=0);
+    DataTypeInt(QString label="", QString size="");
     virtual ~DataTypeInt();
 
     virtual QString format(const QByteArray &byteString) const;

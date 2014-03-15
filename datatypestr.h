@@ -8,7 +8,7 @@ class DataTypeStr : public DataTypeBase
 protected:
     const QString mTypeName = "str";
 public:
-    DataTypeStr(int size=0);
+    DataTypeStr(QString label="", QString size="");
     virtual ~DataTypeStr();
 
     virtual QString format(const QByteArray &byteString) const;

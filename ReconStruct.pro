@@ -34,7 +34,8 @@ HEADERS  += \
     datatypebool.h \
     datatypestr.h \
     deconstructview.h \
-    datatypecustom.h
+    datatypecustom.h \
+    misc.h
 
 FORMS    += \
     mainwindow.ui

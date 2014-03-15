@@ -7,8 +7,9 @@
 #include "datatypeint.h"
 #include "datatypestr.h"
 
-DataTypeBase::DataTypeBase(int size)
-    :mSize(size)
+DataTypeBase::DataTypeBase(QString label, QString size)
+    :mLabel(label)
+    ,mSize(size)
 {
 }
 
@@ -30,17 +31,17 @@ QString DataTypeBase::format(const QByteArray &byteString) const
             .arg(formatByteString(byteString));
 }
 
-std::unique_ptr<DataTypeBase> DataTypeBase::getInterpreter(const QString &type)
+std::unique_ptr<DataTypeBase> DataTypeBase::getInterpreter(const QString &type, const QString &label, const QString &size)
 {
     std::unique_ptr<DataTypeBase> typeInterpreter;
     if (type == "bytes") {
-        typeInterpreter.reset(new DataTypeBytes());
+        typeInterpreter.reset(new DataTypeBytes(label, size));
     } else if (type == "str"){
-        typeInterpreter.reset(new DataTypeStr());
+        typeInterpreter.reset(new DataTypeStr(label, size));
     } else if (type == "int"){
-        typeInterpreter.reset(new DataTypeInt());
+        typeInterpreter.reset(new DataTypeInt(label, size));
     } else if (type == "bool"){
-        typeInterpreter.reset(new DataTypeBool());
+        typeInterpreter.reset(new DataTypeBool(label, size));
     } else {
         typeInterpreter.reset();
     }

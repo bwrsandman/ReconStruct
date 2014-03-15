@@ -1,7 +1,7 @@
 #include "datatypebytes.h"
 
-DataTypeBytes::DataTypeBytes(int size)
-    : DataTypeBase(size)
+DataTypeBytes::DataTypeBytes(QString label, QString size)
+    : DataTypeBase(label, size)
 {
 }
 

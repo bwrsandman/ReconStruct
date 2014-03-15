@@ -2,8 +2,8 @@
 
 #include "mainwindow.h" /* For tr() */
 
-DataTypeBool::DataTypeBool(int size)
-    : DataTypeBase(size)
+DataTypeBool::DataTypeBool(QString label, QString size)
+    : DataTypeBase(label, size)
 {
 }
 
