@@ -12,3 +12,14 @@ $ qmake ReconStruct.pro
 $ make
 $ ./reconstruct
 ```
+
+
+Unittest
+--------
+To compile and run unittests:
+
+```
+$ qmake ReconStruct.pro CONFIG+=test
+$ make
+$ ./reconstruct-tests
+```

@@ -17,3 +17,10 @@ FORMS    +=
 OTHER_FILES += \
     README.md \
     LICENSE.md
+
+test {
+    message(Test build)
+    include(tests/tests.pri)
+} else {
+    message(Normal build)
+}
