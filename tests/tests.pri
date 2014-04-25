@@ -5,4 +5,4 @@ SOURCES -= main.cpp
 HEADERS +=
 
 SOURCES += \
-    tests/main.cpp
+    tests/testreconstruct.cpp

@@ -8,9 +8,15 @@ CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11
 
 SOURCES += \
-    main.cpp
+    main.cpp \
+    datatypebase.cpp \
+    datatypestr.cpp \
+    datatypecustom.cpp
 
-HEADERS  +=
+HEADERS  += \
+    datatypebase.h \
+    datatypestr.h \
+    datatypecustom.h
 
 FORMS    +=
 
