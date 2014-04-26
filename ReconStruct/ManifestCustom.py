@@ -14,12 +14,18 @@ class ManifestCustom(ManifestBase):
         manifest.parent = self
 
     def actual_size_of(self, label):
-        ret = self._current_data[label]
+        if label in self._current_data:
+            ret = self._current_data[label]
+        elif self.parent:
+            ret = self.parent.actual_size_of(label)
+        else:
+            ret = 0
         assert type(ret) is int
         return ret
 
     def __call__(self, data, start=0):
         ret = []
+        parsed = -start
         for i in range(self.size):
             self._current_data = dict()
             sub_ret = []
@@ -30,4 +36,4 @@ class ManifestCustom(ManifestBase):
                 self._current_data[manifest.label] = formatted
             ret.append(sub_ret)
         del self._current_data
-        return ret, start
+        return ret, parsed + start
