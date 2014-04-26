@@ -9,7 +9,9 @@ class ManifestBase(object):
         ret = 0
         if type(self._size) is int:
             ret = self._size
-        else:
+        elif self.parent:
             ret = self.parent.actual_size_of(self._size)
+        else:
+            ret = 0
         assert type(ret) is int
         return ret

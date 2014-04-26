@@ -29,6 +29,11 @@ class TestHello(unittest.TestCase):
 
         self.assertEqual(interpreter(self.data), (u"HELLO", 5))
 
+    def testStrBadSize(self):
+        interpreter = ManifestStr("Test", "BadKey")
+
+        self.assertEqual(interpreter(self.data), (u"", 0))
+
     def testCustomSizeOne(self):
         interpreter = ManifestCustom("Test Custom", 1)
         interpreter.add(ManifestStr("Test String Hello", 5))
@@ -57,6 +62,13 @@ class TestHello(unittest.TestCase):
         self.assertEqual(interpreted[0], [0x0C, "HELLO WORLD!"])
         self.assertEqual(interpreted[1], [0x27, "This will test variable length strings."])
         self.assertEqual(parsed, len(data))
+
+    def testCustomBadSize(self):
+        interpreter = ManifestCustom("One String in Custom with key to nonexistant size", 2)
+        interpreter.add(ManifestStr("Test", "BadKey"))
+
+        self.assertEqual(interpreter(self.data), (2 * [[u""]], 0))
+
 
     def testIntCustomInterpretation(self):
         data = b"""\x03\x04\x07This test takes seven slices of 3 and 4 length words"""
