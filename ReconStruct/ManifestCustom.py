@@ -18,6 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from Equation import Expression
 
 try:
     from ReconStruct.ManifestBase import ManifestBase
@@ -53,14 +54,18 @@ class ManifestCustom(ManifestBase):
         :type label: str.
         :returns:  int -- the parsed size.
         """
-        if label in self._current_data:
-            ret = self._current_data[label]
-        elif self.parent:
-            ret = self.parent.actual_size_of(label)
-        else:
-            ret = 0
-        assert type(ret) is int
-        return ret
+        variables = {}
+        expr = Expression(label)
+        for var in expr:
+            if var in self._current_data:
+                value = self._current_data[var]
+            elif self.parent:
+                value = self.parent.actual_size_of(var)
+            else:
+                value = 0
+            assert type(value) is int
+            variables[var] = value
+        return expr(**variables)  # pylint: disable=W0142
 
     def __call__(self, data, start=0):
         """Parse data with child manifests caching computed values in

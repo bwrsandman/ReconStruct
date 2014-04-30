@@ -103,6 +103,20 @@ class TestHello(unittest.TestCase):
         self.assertEqual(interpreted[0], [3, 4, 7, slices])
         self.assertEqual(parsed, 3 + (3 + 4) * 7)
 
+    def testConditionalSize(self):
+        dataFalse = b"\x10\x04Test"
+        dataTrue = b"\x01\x04Test"
+        interpreter = ManifestCustom("TestConditional", 1)
+        interpreter.add(ManifestInt("Condition", 1))
+        interpreter.add(ManifestInt("StrSize", "Condition < 5"))
+        interpreter.add(ManifestStr("String", "StrSize"))
+
+        interpretedFalse= interpreter(dataFalse)
+        interpretedTrue = interpreter(dataTrue)
+
+        self.assertEqual(interpretedFalse, ([[16, 0, u""]], 1))
+        self.assertEqual(interpretedTrue, ([[1, 4, u"Test"]], 6))
+
     def tearDown(self):
         pass
 

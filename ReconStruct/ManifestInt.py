@@ -37,4 +37,7 @@ class ManifestInt(ManifestBase):
         try:
             return int.from_bytes(sub_data, self.byteorder), self.size
         except AttributeError:
-            return int(sub_data.encode('hex'), 16), self.size
+            try:
+                return int(sub_data.encode('hex'), 16), self.size
+            except ValueError:
+                return 0, self.size

@@ -45,5 +45,5 @@ class ManifestBase(object):
             ret = self.parent.actual_size_of(self._size)
         else:
             ret = 0
-        assert type(ret) is int
+        assert type(ret) in (int, bool), u"ret is of type %s" % type(ret)
         return ret
