@@ -2,23 +2,22 @@
 
 language: python
 
-python: 2.7
-
-env:
-  - TOX_ENV=py34
-  - TOX_ENV=py33
-  - TOX_ENV=py27
-  - TOX_ENV=pypy
-  - TOX_ENV=pep8
-  - TOX_ENV=pylint
-  - TOX_ENV=coverage
-  - TOX_ENV=docs
+python:
+  - "3.4"
+  - "3.3"
+  - "2.7"
+  - "pypy"
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install tox -r requirements.txt
+install: pip install -r requirements.txt coveralls flake8
 
 # command to run tests, e.g. python setup.py test
-script: tox -e $TOX_ENV
+script:
+    - python setup.py flake8
+    - python -m coverage run setup.py test
+
+after_success:
+  coveralls
 
 notifications:
     email: false
