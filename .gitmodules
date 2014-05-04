@@ -1,0 +1,3 @@
+[submodule "QHexEdit"]
+	path = QHexEdit
+	url = git://github.com/bwrsandman/QHexEdit.git

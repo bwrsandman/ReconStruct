@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 ReconStruct
 
@@ -20,21 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from PyQt5.QtWidgets import QMainWindow
 
-from PyQt5.QtWidgets import QApplication
-import sys
-try:
-    from ReconStruct.mainwindow import MainWindow
-except ImportError:
-    from mainwindow import MainWindow
+from PyQt5 import uic
 
-__author__ = 'Sandy Carter'
-__email__ = 'bwrsandman@gmail.com'
-__version__ = '0.1.0'
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        uic.loadUi('mainwindow.ui', self)
+        self.show()
 
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    sys.exit(app.exec_())
