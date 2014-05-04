@@ -20,21 +20,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-from PyQt5.QtWidgets import QApplication
-import sys
-try:
-    from ReconStruct.mainwindow import MainWindow
-except ImportError:
-    from mainwindow import MainWindow
-
-__author__ = 'Sandy Carter'
-__email__ = 'bwrsandman@gmail.com'
-__version__ = '0.1.0'
-
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    sys.exit(app.exec_())
