@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-test_ReconStruct
+test_Manifest
 ----------------------------------
 
-Tests for `ReconStruct` module.
+Tests for Manifest files of `ReconStruct` module.
 
 Copyright (c) 2014 Sandy Carter
 This program is free software: you can redistribute it and/or modify
@@ -23,13 +23,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+
 import unittest
 from ReconStruct.ManifestStr import ManifestStr
 from ReconStruct.ManifestInt import ManifestInt
 from ReconStruct.ManifestCustom import ManifestCustom
 
 
-class TestHello(unittest.TestCase):
+class TestManifest(unittest.TestCase):
     def setUp(self):
         self.data = b"""HELLO WORLD!"""
 

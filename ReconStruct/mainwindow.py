@@ -21,14 +21,67 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
+from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtGui import QCursor
 
 from PyQt5 import uic
 
 class MainWindow(QMainWindow):
-    def __init__(self):
-        super(MainWindow, self).__init__()
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
         uifile = os.path.join(os.path.dirname(__file__), 'mainwindow.ui')
         uic.loadUi(uifile, self)
+        self._current_filename = None
         self.show()
 
+    @pyqtSlot()
+    def on_action_Open_triggered(self):
+        filename, filter = QFileDialog.getOpenFileName(
+            self, self.tr(u"Open Binary File"), '.')
+        if filename:
+            self.loadBinary(filename)
+
+    @pyqtSlot()
+    def on_action_Save_triggered(self):
+        filename, filter = QFileDialog.getSaveFileName(
+            self, self.tr(u"Save Binary File"), '.')
+        if filename:
+            self.saveBinary(filename)
+
+    @pyqtSlot()
+    def on_action_Import_Schema_triggered(self):
+        filename, filter = QFileDialog.getOpenFileName(
+            self, self.tr(u"Open Schema of Binary File"), '.')
+        if filename:
+            self.loadSchema(filename)
+
+    @pyqtSlot()
+    def on_action_Export_Schema_triggered(self):
+        filename, filter = QFileDialog.getSaveFileName(
+            self, self.tr(u"Save Schema of Binary File"), '.')
+        if filename:
+            self.saveSchema(filename)
+
+    @pyqtSlot()
+    def on_action_Add_triggered(self):
+        self.addRow()
+
+    def loadBinary(self, filename):
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        with open(filename, 'rb') as f:
+            self.qHexEdit.setData(f.read())
+        QApplication.restoreOverrideCursor()
+        self._current_filename = filename
+
+    def saveBinary(self, filename):
+        pass
+
+    def loadSchema(self, filename):
+        pass
+
+    def saveSchema(self, filename):
+        pass
+
+    def addRow(self, label="", size="", type="", parent=None):
+        pass

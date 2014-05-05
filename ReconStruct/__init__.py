@@ -20,3 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
+__author__ = 'Sandy Carter'
+__email__ = 'bwrsandman@gmail.com'
+__version__ = '0.1.0'
