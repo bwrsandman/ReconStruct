@@ -41,4 +41,5 @@ def main():
 
 
 if __name__ == "__main__":  # pragma: no cover
-    sys.exit(main()[0].exec_())
+    app, win = main()
+    sys.exit(app.exec_())
