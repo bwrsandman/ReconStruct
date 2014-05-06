@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         uifile = os.path.join(os.path.dirname(__file__), 'mainwindow.ui')
         uic.loadUi(uifile, self)
         self._current_filename = None
-        self.treeView = DeconstructTreeView(self.splitter)
+        self.treeView = DeconstructTreeView(self.qHexEdit, self.splitter)
         self.show()
 
     @pyqtSlot()

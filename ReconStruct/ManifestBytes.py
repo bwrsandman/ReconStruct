@@ -25,23 +25,14 @@ except ImportError:
     from ManifestBase import ManifestBase
 
 
-class ManifestInt(ManifestBase):
-    """Descriptor manifest which represents integers (currently only supports
-    big-endian)"""
+class ManifestBytes(ManifestBase):
+    """Descriptor manifest which parses bytestrings"""
     def __init__(self, label, size, parent=None):
-        super(ManifestInt, self).__init__(label, size, parent)
-        self.byteorder = "big"
+        super(ManifestBytes, self).__init__(label, size, parent)
 
     def __call__(self, data, start=0):
-        sub_data = data[start:start + self.size]
-        try:
-            return int.from_bytes(sub_data, self.byteorder), self.size
-        except AttributeError:
-            try:
-                return int(sub_data.encode('hex'), 16), self.size
-            except ValueError:
-                return 0, self.size
+        return " ".join(map(hex, data[start:start + self.size])), self.size
 
     @classmethod
     def type(cls):
-        return 'int'
+        return 'bytes'

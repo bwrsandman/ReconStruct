@@ -39,7 +39,6 @@ class ManifestBase(object):
         previously parsed value and this function will fetch it. If not,
         then get size directly from ``self._size``.
         """
-        ret = 0
         if type(self._size) is int:
             ret = self._size
         elif self.parent:

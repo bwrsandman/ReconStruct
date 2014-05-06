@@ -36,10 +36,13 @@ class DeconstructTreeView(QTreeView):
     COL_TYPE = 2
     COL_PREVIEW = 3
 
-    def __init__(self, parent=None):
+    def __init__(self, qHexEdit, parent=None):
         super(DeconstructTreeView, self).__init__(parent)
 
+        self.qHexEdit = qHexEdit
+
         self.manifest = ManifestMain()
+        self.coveredSize = 0
 
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
@@ -70,9 +73,10 @@ class DeconstructTreeView(QTreeView):
         if not parent:
              parent = self.model().invisibleRootItem()
         if not size:
-            size = hex(self.getSelectionSize())
+            # size = hex(self.getSelectionSize())
+            size = str(self.getSelectionSize())
         if not data_type:
-            data_type = "str"
+            data_type = "bytes"
         ManifestClass = ManifestMain.get_manifest(data_type)
         self.manifest.add(ManifestClass(label, size))
         self.refreshView()
@@ -80,9 +84,10 @@ class DeconstructTreeView(QTreeView):
     def refreshView(self):
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
-        for manifest in self.manifest:
+        interp, size = self.manifest(bytes(self.qHexEdit.data()))
+        for manifest, data in zip(self.manifest, interp[0]):
             parent = root
-            preview = QStandardItem()
+            preview = QStandardItem(data)
             preview.setEditable(False)
             parent.appendRow([
                 QStandardItem(manifest.label),
@@ -90,6 +95,7 @@ class DeconstructTreeView(QTreeView):
                 QStandardItem(manifest.type()),
                 preview,
             ])
+        self.coveredSize = size
 
     def getSelectionSize(self):
-        return 0
+        return max(0, self.qHexEdit.cursorPosition() - self.coveredSize)

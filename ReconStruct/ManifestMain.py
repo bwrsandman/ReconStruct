@@ -22,10 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 try:
     from ReconStruct.ManifestInt import ManifestInt
     from ReconStruct.ManifestStr import ManifestStr
+    from ReconStruct.ManifestBytes import ManifestBytes
     from ReconStruct.ManifestCustom import ManifestCustom
 except ImportError:
     from ManifestInt import ManifestInt
     from ManifestStr import ManifestStr
+    from ManifestBytes import ManifestBytes
     from ManifestCustom import ManifestCustom
 
 
@@ -34,8 +36,11 @@ class ManifestMain(ManifestCustom):
     of the manifest tree. Does not repeat and is not immediately accessible
     """
     __manifest_types = {
-        'int': ManifestInt,
-        'str': ManifestStr,
+        ManifestClass.type(): ManifestClass for ManifestClass in (
+            ManifestInt,
+            ManifestStr,
+            ManifestBytes,
+        )
     }
 
     def __init__(self):

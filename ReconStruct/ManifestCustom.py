@@ -78,10 +78,11 @@ class ManifestCustom(ManifestBase):
         """
         ret = []
         parsed = -start
+        self._current_data = dict()
         for _ in range(self.size):
             self._current_data = dict()
             sub_ret = []
-            for manifest in self.submanifests:
+            for manifest in self:
                 formatted, shift = manifest(data, start)
                 sub_ret.append(formatted)
                 start += shift

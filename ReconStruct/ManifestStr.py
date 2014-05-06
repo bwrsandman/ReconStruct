@@ -31,7 +31,10 @@ class ManifestStr(ManifestBase):
         super(ManifestStr, self).__init__(label, size, parent)
 
     def __call__(self, data, start=0):
-        return data[start:start + self.size].decode("utf-8"), self.size
+        try:
+            return data[start:start + self.size].decode("utf-8"), self.size
+        except UnicodeError as e:
+            return str(e), self.size
 
     @classmethod
     def type(cls):
