@@ -27,7 +27,7 @@ except ImportError:
 
 
 class ManifestCustom(ManifestBase):
-    """Descriptior manifest which can contain other manifests.
+    """Descriptor manifest which can contain other manifests.
     Allows repeating datatypes to be represented in an array-style fashion
     Provide :func:`add` and :func:`actual_size_of`
     """
@@ -89,3 +89,11 @@ class ManifestCustom(ManifestBase):
             ret.append(sub_ret)
         del self._current_data
         return ret, parsed + start
+
+    def __iter__(self):
+        return self.submanifests.__iter__()
+
+    @classmethod
+    @property
+    def type(cls):
+        raise NotImplementedError("Get name of custom class")

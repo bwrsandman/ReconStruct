@@ -32,3 +32,7 @@ class ManifestStr(ManifestBase):
 
     def __call__(self, data, start=0):
         return data[start:start + self.size].decode("utf-8"), self.size
+
+    @classmethod
+    def type(cls):
+        return 'str'

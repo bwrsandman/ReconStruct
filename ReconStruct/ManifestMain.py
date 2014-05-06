@@ -20,29 +20,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 try:
-    from ReconStruct.ManifestBase import ManifestBase
+    from ReconStruct.ManifestInt import ManifestInt
+    from ReconStruct.ManifestStr import ManifestStr
+    from ReconStruct.ManifestCustom import ManifestCustom
 except ImportError:
-    from ManifestBase import ManifestBase
+    from ManifestInt import ManifestInt
+    from ManifestStr import ManifestStr
+    from ManifestCustom import ManifestCustom
 
 
-class ManifestInt(ManifestBase):
-    """Descriptor manifest which represents integers (currently only supports
-    big-endian)"""
-    def __init__(self, label, size, parent=None):
-        super(ManifestInt, self).__init__(label, size, parent)
-        self.byteorder = "big"
+class ManifestMain(ManifestCustom):
+    """Special version of ManifestCustom which is meant to be the invisible root
+    of the manifest tree. Does not repeat and is not immediately accessible
+    """
+    __manifest_types = {
+        'int': ManifestInt,
+        'str': ManifestStr,
+    }
 
-    def __call__(self, data, start=0):
-        sub_data = data[start:start + self.size]
-        try:
-            return int.from_bytes(sub_data, self.byteorder), self.size
-        except AttributeError:
-            try:
-                return int(sub_data.encode('hex'), 16), self.size
-            except ValueError:
-                return 0, self.size
+    def __init__(self):
+        super(ManifestMain, self).__init__("Main", 1, None)
 
     @classmethod
-    @property
-    def type(cls):
-        return 'int'
+    def get_manifest(cls, item):
+        if item in cls.__manifest_types:
+            return cls.__manifest_types[item]
+        else:
+            return ManifestCustom,

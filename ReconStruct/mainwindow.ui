@@ -43,17 +43,6 @@
         </size>
        </property>
       </widget>
-      <widget class="QTreeView" name="treeView">
-       <property name="tabKeyNavigation">
-        <bool>true</bool>
-       </property>
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="selectionMode">
-        <enum>QAbstractItemView::ContiguousSelection</enum>
-       </property>
-      </widget>
      </widget>
     </item>
    </layout>

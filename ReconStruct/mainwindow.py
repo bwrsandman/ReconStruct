@@ -24,8 +24,12 @@ import os
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QCursor
-
 from PyQt5 import uic
+
+try:
+    from ReconStruct.DeconstructTreeView import DeconstructTreeView
+except ImportError:
+    from DeconstructTreeView import DeconstructTreeView
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -33,6 +37,7 @@ class MainWindow(QMainWindow):
         uifile = os.path.join(os.path.dirname(__file__), 'mainwindow.ui')
         uic.loadUi(uifile, self)
         self._current_filename = None
+        self.treeView = DeconstructTreeView(self.splitter)
         self.show()
 
     @pyqtSlot()
@@ -83,5 +88,5 @@ class MainWindow(QMainWindow):
     def saveSchema(self, filename):
         pass
 
-    def addRow(self, label="", size="", type="", parent=None):
-        pass
+    def addRow(self, label="", size="", data_type="", parent=None):
+        self.treeView.addRow(label, size, data_type, parent)
