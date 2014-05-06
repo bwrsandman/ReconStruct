@@ -20,14 +20,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import QItemSelectionModel, pyqtSlot
+from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QTreeView, QAbstractItemView
 
 try:
     from ReconStruct.ManifestMain import ManifestMain
+    from ReconStruct.TypesItemDelegate import TypesItemDelegate
 except ImportError:
     from ManifestMain import ManifestMain
+    from TypesItemDelegate import TypesItemDelegate
 
 
 class DeconstructTreeView(QTreeView):
@@ -43,7 +45,7 @@ class DeconstructTreeView(QTreeView):
         self.qHexEdit = qHexEdit
 
         self.manifest = ManifestMain()
-        self.coveredSize = 0
+        self.covered_size = 0
 
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
@@ -59,15 +61,32 @@ class DeconstructTreeView(QTreeView):
             self.COL_PREVIEW, QStandardItem(self.tr("Preview")))
 
         selection_model = QItemSelectionModel(model, self)
+        model.itemChanged.connect(self.on_itemChanged)
         selection_model.selectionChanged.connect(self.on_selectionChanged)
 
         self.setModel(model)
         self.setSelectionModel(selection_model)
 
+        self.setItemDelegateForColumn(
+            self.COL_TYPE,
+            TypesItemDelegate(ManifestMain.get_type_names(), parent=self)
+        )
+
         self.setColumnWidth(self.COL_LABEL, 100)
         self.setColumnWidth(self.COL_SIZE, 50)
         self.setColumnWidth(self.COL_TYPE, 55)
         self.setColumnWidth(self.COL_PREVIEW, 20)
+
+    def on_itemChanged(self, item):
+        row = item.index().row()
+        model = self.model()
+        label = model.item(row, self.COL_LABEL).text()
+        size = model.item(row, self.COL_SIZE).text()
+        data_type = model.item(row, self.COL_TYPE).text()
+        ManifestClass = ManifestMain.get_manifest(data_type)
+        self.manifest.sub_manifests[row] = ManifestClass(
+            label, size, self.manifest)
+        self.refresh_view()
 
     def on_selectionChanged(self, destination, origin):
         try:
@@ -75,9 +94,9 @@ class DeconstructTreeView(QTreeView):
         except IndexError:
             row = 0
         item = self.model().item(row, self.COL_PREVIEW)
-        self.qHexEdit.setSelection(item.start, item.size)
+        self.qHexEdit.setSelection(item.start, item.start + item.size)
 
-    def addRow(self, label="", size="", data_type="", parent=None):
+    def add_row(self, label="", size="", data_type="", parent=None):
         """
 
         :type data_type: str
@@ -86,21 +105,21 @@ class DeconstructTreeView(QTreeView):
             parent = self.model().invisibleRootItem()
         if not size:
             # size = hex(self.getSelectionSize())
-            size = str(self.getSelectionSize())
+            size = str(self.get_selection_size())
         if not data_type:
             data_type = "bytes"
         ManifestClass = ManifestMain.get_manifest(data_type)
         self.manifest.add(ManifestClass(label, size))
-        self.refreshView()
+        self.refresh_view()
 
-    def refreshView(self):
+    def refresh_view(self):
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
         interp, size = self.manifest(bytes(self.qHexEdit.data()))
         start_index = 0
         for manifest, data in zip(self.manifest, interp[0]):
             parent = root
-            preview = QStandardItem(data)
+            preview = QStandardItem(str(data))
             preview.setEditable(False)
             preview.size = manifest.size
             preview.start = start_index
@@ -111,7 +130,7 @@ class DeconstructTreeView(QTreeView):
                 QStandardItem(manifest.type()),
                 preview,
             ])
-        self.coveredSize = size
+        self.covered_size = size
 
-    def getSelectionSize(self):
-        return max(0, self.qHexEdit.cursorPosition() - self.coveredSize)
+    def get_selection_size(self):
+        return max(0, self.qHexEdit.cursorPosition() - self.covered_size)

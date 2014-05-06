@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 ReconStruct
 
@@ -52,3 +53,7 @@ class ManifestMain(ManifestCustom):
             return cls.__manifest_types[item]
         else:
             return ManifestCustom,
+
+    @classmethod
+    def get_type_names(cls):
+        return cls.__manifest_types.keys()

@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """
 ReconStruct
 
@@ -89,4 +90,4 @@ class MainWindow(QMainWindow):
         pass
 
     def addRow(self, label="", size="", data_type="", parent=None):
-        self.treeView.addRow(label, size, data_type, parent)
+        self.treeView.add_row(label, size, data_type, parent)

@@ -33,8 +33,8 @@ class ManifestCustom(ManifestBase):
     """
     def __init__(self, label, size, parent=None):
         super(ManifestCustom, self).__init__(label, size, parent)
-        self.submanifests = []
-        self._current_data = []
+        self.sub_manifests = []
+        self.current_data = dict()
 
     def add(self, manifest):
         """Add child manifests to this manifest and set their parent
@@ -42,7 +42,7 @@ class ManifestCustom(ManifestBase):
         :param manifest: A new child of this manifest.
         :type manifest: ManifestBase.
         """
-        self.submanifests.append(manifest)
+        self.sub_manifests.append(manifest)
         manifest.parent = self
 
     def actual_size_of(self, label):
@@ -57,13 +57,17 @@ class ManifestCustom(ManifestBase):
         variables = {}
         expr = Expression(label)
         for var in expr:
-            if var in self._current_data:
-                value = self._current_data[var]
+            if var in self.current_data:
+                value = self.current_data[var]
             elif self.parent:
                 value = self.parent.actual_size_of(var)
             else:
                 value = 0
-            assert type(value) is int
+            if type(value) is not int:
+                try:
+                    value = int(value)
+                except ValueError:
+                    value = 0
             variables[var] = value
         return expr(**variables)  # pylint: disable=W0142
 
@@ -78,21 +82,19 @@ class ManifestCustom(ManifestBase):
         """
         ret = []
         parsed = -start
-        self._current_data = dict()
         for _ in range(self.size):
-            self._current_data = dict()
+            self.current_data = dict()
             sub_ret = []
             for manifest in self:
                 formatted, shift = manifest(data, start)
                 sub_ret.append(formatted)
                 start += shift
-                self._current_data[manifest.label] = formatted
+                self.current_data[manifest.label] = formatted
             ret.append(sub_ret)
-        del self._current_data
         return ret, parsed + start
 
     def __iter__(self):
-        return self.submanifests.__iter__()
+        return self.sub_manifests.__iter__()
 
     @classmethod
     @property
