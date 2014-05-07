@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from Equation import Expression
 
 try:
-    from ReconStruct.ManifestBase import ManifestBase
+    from ReconStruct.ManifestBase import ManifestBase, ParsedBase
 except ImportError:
-    from ManifestBase import ManifestBase
+    from ManifestBase import ManifestBase, ParsedBase
 
 
 class ManifestCustom(ManifestBase):
@@ -31,10 +31,11 @@ class ManifestCustom(ManifestBase):
     Allows repeating datatypes to be represented in an array-style fashion
     Provide :func:`add` and :func:`actual_size_of`
     """
-    def __init__(self, label, size, parent=None):
+    def __init__(self, label, size, type_name, parent=None):
         super(ManifestCustom, self).__init__(label, size, parent)
         self.sub_manifests = []
         self.current_data = dict()
+        self.type_name = type_name
 
     def add(self, manifest):
         """Add child manifests to this manifest and set their parent
@@ -58,7 +59,7 @@ class ManifestCustom(ManifestBase):
         expr = Expression(label)
         for var in expr:
             if var in self.current_data:
-                value = self.current_data[var]
+                value = self.current_data[var].data
             elif self.parent:
                 value = self.parent.actual_size_of(var)
             else:
@@ -81,22 +82,27 @@ class ManifestCustom(ManifestBase):
         :type start: int.
         """
         ret = []
+        index = start
         parsed = -start
         for _ in range(self.size):
             self.current_data = dict()
             sub_ret = []
             for manifest in self:
-                formatted, shift = manifest(data, start)
-                sub_ret.append(formatted)
-                start += shift
-                self.current_data[manifest.label] = formatted
+                result = manifest(data, start)
+                sub_ret.append(result)
+                start += result.size
+                self.current_data[manifest.label] = result
             ret.append(sub_ret)
-        return ret, parsed + start
+        return ParsedCustom(ret, index, parsed)
 
     def __iter__(self):
         return self.sub_manifests.__iter__()
 
-    @classmethod
-    @property
-    def type(cls):
-        raise NotImplementedError("Get name of custom class")
+    def type(self):
+        return self.type_name
+
+
+class ParsedCustom(ParsedBase):
+    def __init__(self, data, index, size):
+        size = sum(sum(y.size for y in x) for x in data)
+        super(ParsedCustom, self).__init__(data, index, size)

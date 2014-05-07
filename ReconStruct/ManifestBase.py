@@ -52,3 +52,10 @@ class ManifestBase(object):
         except (ValueError, AttributeError):
             ret = 0
         return ret
+
+
+class ParsedBase(object):
+    def __init__(self, data, index, size):
+        self.data = data
+        self.index = index
+        self.size = size

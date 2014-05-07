@@ -20,22 +20,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 try:
-    from ReconStruct.ManifestBase import ManifestBase
+    from ReconStruct.ManifestBase import ManifestBase, ParsedBase
 except ImportError:
-    from ManifestBase import ManifestBase
+    from ManifestBase import ManifestBase, ParsedBase
 
 
 class ManifestStr(ManifestBase):
     """Descriptor manifest which parses strings"""
-    def __init__(self, label, size, parent=None):
+    def __init__(self, label, size, type_name='str', parent=None):
         super(ManifestStr, self).__init__(label, size, parent)
 
     def __call__(self, data, start=0):
         try:
-            return data[start:start + self.size].decode("utf-8"), self.size
+            return ParsedStr(data[start:start + self.size].decode("utf-8"),
+                             start, self.size)
         except UnicodeError as e:
-            return str(e), self.size
+            return ParsedStr(str(e), start, self.size)
 
     @classmethod
     def type(cls):
         return 'str'
+
+
+class ParsedStr(ParsedBase):
+    def __init__(self, data, index, size):
+        super(ParsedStr, self).__init__(data, index, size)

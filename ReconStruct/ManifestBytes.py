@@ -20,19 +20,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 try:
-    from ReconStruct.ManifestBase import ManifestBase
+    from ReconStruct.ManifestBase import ManifestBase, ParsedBase
 except ImportError:
-    from ManifestBase import ManifestBase
+    from ManifestBase import ManifestBase, ParsedBase
 
 
 class ManifestBytes(ManifestBase):
     """Descriptor manifest which parses bytestrings"""
-    def __init__(self, label, size, parent=None):
+    def __init__(self, label, size, type_name='bytes', parent=None):
         super(ManifestBytes, self).__init__(label, size, parent)
 
     def __call__(self, data, start=0):
-        return " ".join(map(hex, data[start:start + self.size])), self.size
+        return ParsedBytes(" ".join(map(hex, data[start:start + self.size])),
+                           start, self.size)
 
     @classmethod
     def type(cls):
         return 'bytes'
+
+
+class ParsedBytes(ParsedBase):
+    def __init__(self, data, index, size):
+        super(ParsedBytes, self).__init__(data, index, size)

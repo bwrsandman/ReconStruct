@@ -20,28 +20,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 try:
-    from ReconStruct.ManifestBase import ManifestBase
+    from ReconStruct.ManifestBase import ManifestBase, ParsedBase
 except ImportError:
-    from ManifestBase import ManifestBase
+    from ManifestBase import ManifestBase, ParsedBase
 
 
 class ManifestInt(ManifestBase):
     """Descriptor manifest which represents integers (currently only supports
     big-endian)"""
-    def __init__(self, label, size, parent=None):
+    def __init__(self, label, size, type_name='int', parent=None):
         super(ManifestInt, self).__init__(label, size, parent)
         self.byteorder = "big"
 
     def __call__(self, data, start=0):
         sub_data = data[start:start + self.size]
         try:
-            return int.from_bytes(sub_data, self.byteorder), self.size
+            return ParsedInt(
+                int.from_bytes(sub_data, self.byteorder), start, self.size)
         except AttributeError:
             try:
-                return int(sub_data.encode('hex'), 16), self.size
+                return ParsedInt(
+                    int(sub_data.encode('hex'), 16), start, self.size)
             except ValueError:
-                return 0, self.size
+                return ParsedInt(0, start, self.size)
 
     @classmethod
     def type(cls):
         return 'int'
+
+
+class ParsedInt(ParsedBase):
+    def __init__(self, data, index, size):
+        super(ParsedInt, self).__init__(data, index, size)

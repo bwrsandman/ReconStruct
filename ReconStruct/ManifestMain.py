@@ -45,7 +45,7 @@ class ManifestMain(ManifestCustom):
     }
 
     def __init__(self):
-        super(ManifestMain, self).__init__("Main", 1, None)
+        super(ManifestMain, self).__init__("Main", 1, 'main', None)
 
     @classmethod
     def get_manifest(cls, item):
@@ -57,3 +57,6 @@ class ManifestMain(ManifestCustom):
     @classmethod
     def get_type_names(cls):
         return cls.__manifest_types.keys()
+
+    def add_custom_type(self, name):
+        self.__manifest_types[name] = ManifestCustom

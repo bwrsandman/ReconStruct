@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QTreeView, QAbstractItemView
+from PyQt5.QtWidgets import QTreeView, QAbstractItemView, QInputDialog
 
 try:
     from ReconStruct.ManifestMain import ManifestMain
@@ -67,10 +67,9 @@ class DeconstructTreeView(QTreeView):
         self.setModel(model)
         self.setSelectionModel(selection_model)
 
-        self.setItemDelegateForColumn(
-            self.COL_TYPE,
-            TypesItemDelegate(ManifestMain.get_type_names(), parent=self)
-        )
+        self.type_delegate = TypesItemDelegate(
+            ManifestMain.get_type_names(), parent=self)
+        self.setItemDelegateForColumn(self.COL_TYPE, self.type_delegate)
 
         self.setColumnWidth(self.COL_LABEL, 100)
         self.setColumnWidth(self.COL_SIZE, 50)
@@ -83,9 +82,16 @@ class DeconstructTreeView(QTreeView):
         label = model.item(row, self.COL_LABEL).text()
         size = model.item(row, self.COL_SIZE).text()
         data_type = model.item(row, self.COL_TYPE).text()
+        if data_type == self.tr('custom'):
+            data_type, ok = QInputDialog.getText(
+                self, self.tr("Create New Type"), self.tr("Name"))
+            if not ok:
+                return
+            self.type_delegate.addType(data_type)
+            self.manifest.add_custom_type(data_type)
         ManifestClass = ManifestMain.get_manifest(data_type)
         self.manifest.sub_manifests[row] = ManifestClass(
-            label, size, self.manifest)
+            label, size, data_type, self.manifest)
         self.refresh_view()
 
     def on_selectionChanged(self, destination, origin):
@@ -93,8 +99,8 @@ class DeconstructTreeView(QTreeView):
             row = destination.indexes()[0].row()
         except IndexError:
             row = 0
-        item = self.model().item(row, self.COL_PREVIEW)
-        self.qHexEdit.setSelection(item.start, item.start + item.size)
+        item = self.model().item(row, self.COL_PREVIEW).result
+        self.qHexEdit.setSelection(item.index, item.index + item.size)
 
     def add_row(self, label="", size="", data_type="", parent=None):
         """
@@ -115,22 +121,19 @@ class DeconstructTreeView(QTreeView):
     def refresh_view(self):
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
-        interp, size = self.manifest(bytes(self.qHexEdit.data()))
-        start_index = 0
-        for manifest, data in zip(self.manifest, interp[0]):
+        main_result = self.manifest(bytes(self.qHexEdit.data()))
+        for manifest, result in zip(self.manifest, main_result.data[0]):
             parent = root
-            preview = QStandardItem(str(data))
+            preview = QStandardItem(str(result.data))
             preview.setEditable(False)
-            preview.size = manifest.size
-            preview.start = start_index
-            start_index += manifest.size
+            preview.result = result
             parent.appendRow([
                 QStandardItem(manifest.label),
                 QStandardItem(manifest._size),
                 QStandardItem(manifest.type()),
                 preview,
             ])
-        self.covered_size = size
+        self.covered_size = main_result.size + main_result.index
 
     def get_selection_size(self):
         return max(0, self.qHexEdit.cursorPosition() - self.covered_size)

@@ -37,86 +37,132 @@ class TestManifest(unittest.TestCase):
     def testInt(self):
         data = b"\x00\x00\x00\x00\x10"
         interpreter = ManifestInt("Test", 5)
-
-        self.assertEqual(interpreter(data), (16, 5))
+        result = interpreter(data)
+        self.assertEqual(result.index, 0)
+        self.assertEqual(result.size, 5)
+        self.assertEqual(result.data, 16)
 
     def testStr(self):
         interpreter = ManifestStr("Test", 5)
-
-        self.assertEqual(interpreter(self.data), (u"HELLO", 5))
+        result = interpreter(self.data)
+        self.assertEqual(result.index, 0)
+        self.assertEqual(result.size, 5)
+        self.assertEqual(result.data, u"HELLO")
 
     def testStrBadSize(self):
         interpreter = ManifestStr("Test", "BadKey")
-
-        self.assertEqual(interpreter(self.data), (u"", 0))
+        result = interpreter(self.data)
+        self.assertEqual(result.index, 0)
+        self.assertEqual(result.size, 0)
+        self.assertEqual(result.data, u"")
 
     def testCustomSizeOne(self):
-        interpreter = ManifestCustom("Test Custom", 1)
+        interpreter = ManifestCustom("Test Custom", 1, "test_type")
         interpreter.add(ManifestStr("Test String Hello", 5))
         interpreter.add(ManifestStr("Test String space", 1))
         interpreter.add(ManifestStr("Test String world", 5))
-
-        self.assertEqual(interpreter(self.data),
-                         ([[u"HELLO", u" ", u"WORLD"]], 11))
+        result = interpreter(self.data)
+        self.assertEqual(result.data[0][0].index, 0)
+        self.assertEqual(result.data[0][0].size, 5)
+        self.assertEqual(result.data[0][0].data, u"HELLO")
+        self.assertEqual(result.data[0][1].index, 5)
+        self.assertEqual(result.data[0][1].size, 1)
+        self.assertEqual(result.data[0][1].data, u" ")
+        self.assertEqual(result.data[0][2].index, 6)
+        self.assertEqual(result.data[0][2].size, 5)
+        self.assertEqual(result.data[0][2].data, u"WORLD")
+        self.assertEqual(result.size, 11)
+        self.assertEqual(result.index, 0)
 
     def testCustomSizeTwo(self):
-        interpreter = ManifestCustom("Test Custom", 2)
+        interpreter = ManifestCustom("Test Custom", 2, "test_type")
         interpreter.add(ManifestStr("Test String word", 5))
         interpreter.add(ManifestStr("Test String special", 1))
-
-        self.assertEqual(interpreter(self.data),
-                         ([[u"HELLO", u" "], [u"WORLD", u"!"]], 12))
+        result = interpreter(self.data)
+        self.assertEqual(result.data[0][0].index, 0)
+        self.assertEqual(result.data[0][0].size, 5)
+        self.assertEqual(result.data[0][0].data, u"HELLO")
+        self.assertEqual(result.data[0][1].index, 5)
+        self.assertEqual(result.data[0][1].size, 1)
+        self.assertEqual(result.data[0][1].data, u" ")
+        self.assertEqual(result.data[1][0].index, 6)
+        self.assertEqual(result.data[1][0].size, 5)
+        self.assertEqual(result.data[1][0].data, u"WORLD")
+        self.assertEqual(result.data[1][1].index, 11)
+        self.assertEqual(result.data[1][1].size, 1)
+        self.assertEqual(result.data[1][1].data, u"!")
+        self.assertEqual(result.size, 12)
+        self.assertEqual(result.index, 0)
 
     def testIntStrInterpretation(self):
-        data = b"""\x0CHELLO WORLD!\x27This will test variable length strings."""
-        interpreter = ManifestCustom("One Int, variable String", 2)
+        data = b"\x0CHELLO WORLD!\x27This will test variable length strings."
+        interpreter = ManifestCustom("One Int, variable str", 2, "test_type")
         interpreter.add(ManifestInt("StrLen", 1))
         interpreter.add(ManifestStr("Str", "StrLen"))
-
-        interpreted, parsed = interpreter(data)
-
-        self.assertEqual(interpreted[0], [0x0C, "HELLO WORLD!"])
-        self.assertEqual(interpreted[1], [0x27, "This will test variable length strings."])
-        self.assertEqual(parsed, len(data))
+        result = interpreter(data)
+        self.assertEqual(result.data[0][1].index, 1)
+        self.assertEqual(result.data[0][1].size, 0x0C)
+        self.assertEqual(result.data[0][1].data, u"HELLO WORLD!")
+        self.assertEqual(result.data[1][1].index, 0x0E)
+        self.assertEqual(result.data[1][1].size, 0x27)
+        self.assertEqual(result.data[1][1].data, u"This will test variable length strings.")
+        self.assertEqual(result.size, len(data))
+        self.assertEqual(result.index, 0)
 
     def testCustomBadSize(self):
-        interpreter = ManifestCustom("One String in Custom with key to nonexistant size", 2)
+        interpreter = ManifestCustom("One String in Custom with key to nonexistant size", 2, "test_type")
         interpreter.add(ManifestStr("Test", "BadKey"))
+        result = interpreter(self.data)
+        self.assertEqual(result.data[0][0].index, 0)
+        self.assertEqual(result.data[0][0].size, 0)
+        self.assertEqual(result.data[0][0].data, u"")
+        self.assertEqual(result.data[1][0].index, 0)
+        self.assertEqual(result.data[1][0].size, 0)
+        self.assertEqual(result.data[1][0].data, u"")
+        self.assertEqual(result.size, 0)
+        self.assertEqual(result.index, 0)
 
-        self.assertEqual(interpreter(self.data), (2 * [[u""]], 0))
 
 
     def testIntCustomInterpretation(self):
         data = b"""\x03\x04\x07This test takes seven slices of 3 and 4 length words"""
-        interpreter = ManifestCustom("String slices", 1)
+        interpreter = ManifestCustom("String slices", 1, "test_type")
         interpreter.add(ManifestInt("StrLen1", 1))
         interpreter.add(ManifestInt("StrLen2", 1))
         interpreter.add(ManifestInt("ArrayLen", 1))
-        array = ManifestCustom("Array", "ArrayLen")
+        array = ManifestCustom("Array", "ArrayLen", "test_array")
         array.add(ManifestStr("String", "StrLen1"))
         array.add(ManifestStr("String", "StrLen2"))
         interpreter.add(array)
-
-        interpreted, parsed = interpreter(data)
-
+        result = interpreter(data)
         slices = "Thi;s te|st ;take|s s;even| sl;ices| of; 3 a|nd ;4 le|ngt;h wo|rds".split('|')[:7]
         slices = list(map(lambda x: x.split(';'), slices))
-        self.assertEqual(interpreted[0], [3, 4, 7, slices])
-        self.assertEqual(parsed, 3 + (3 + 4) * 7)
+        self.assertEqual(result.data[0][0].data, 3)
+        self.assertEqual(result.data[0][1].data, 4)
+        self.assertEqual(result.data[0][2].data, 7)
+        result_array = result.data[0][3]
+        self.assertEqual([[y.data for y in x] for x in result_array.data], slices)
+        self.assertEqual(result.size, 3 + (3 + 4) * 7)
 
     def testConditionalSize(self):
         dataFalse = b"\x10\x04Test"
         dataTrue = b"\x01\x04Test"
-        interpreter = ManifestCustom("TestConditional", 1)
+        interpreter = ManifestCustom("TestConditional", 1, "test_type")
         interpreter.add(ManifestInt("Condition", 1))
         interpreter.add(ManifestInt("StrSize", "Condition < 5"))
         interpreter.add(ManifestStr("String", "StrSize"))
 
-        interpretedFalse= interpreter(dataFalse)
-        interpretedTrue = interpreter(dataTrue)
+        result_false = interpreter(dataFalse)
+        result_true = interpreter(dataTrue)
 
-        self.assertEqual(interpretedFalse, ([[16, 0, u""]], 1))
-        self.assertEqual(interpretedTrue, ([[1, 4, u"Test"]], 6))
+        self.assertEqual(result_false.size, 1)
+        self.assertEqual(result_false.data[0][0].data, 16)
+        self.assertEqual(result_false.data[0][1].data, 0)
+        self.assertEqual(result_false.data[0][2].data, u"")
+        self.assertEqual(result_true.size, 6)
+        self.assertEqual(result_true.data[0][0].data, 1)
+        self.assertEqual(result_true.data[0][1].data, 4)
+        self.assertEqual(result_true.data[0][2].data, u"Test")
 
     def tearDown(self):
         pass
