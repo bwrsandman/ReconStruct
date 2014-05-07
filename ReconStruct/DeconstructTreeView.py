@@ -26,9 +26,11 @@ from PyQt5.QtWidgets import QTreeView, QAbstractItemView, QInputDialog
 
 try:
     from ReconStruct.ManifestMain import ManifestMain
+    from ReconStruct.ManifestCustom import ManifestCustom, ParsedCustom
     from ReconStruct.TypesItemDelegate import TypesItemDelegate
 except ImportError:
     from ManifestMain import ManifestMain
+    from ManifestCustom import ManifestCustom, ParsedCustom
     from TypesItemDelegate import TypesItemDelegate
 
 
@@ -77,11 +79,11 @@ class DeconstructTreeView(QTreeView):
         self.setColumnWidth(self.COL_PREVIEW, 20)
 
     def on_itemChanged(self, item):
+        parent = item.parent() or self.model().invisibleRootItem()
         row = item.index().row()
-        model = self.model()
-        label = model.item(row, self.COL_LABEL).text()
-        size = model.item(row, self.COL_SIZE).text()
-        data_type = model.item(row, self.COL_TYPE).text()
+        label = parent.child(row, self.COL_LABEL).text()
+        size = parent.child(row, self.COL_SIZE).text()
+        data_type = parent.child(row, self.COL_TYPE).text()
         if data_type == self.tr('custom'):
             data_type, ok = QInputDialog.getText(
                 self, self.tr("Create New Type"), self.tr("Name"))
@@ -89,9 +91,22 @@ class DeconstructTreeView(QTreeView):
                 return
             self.type_delegate.addType(data_type)
             self.manifest.add_custom_type(data_type)
-        ManifestClass = ManifestMain.get_manifest(data_type)
-        self.manifest.sub_manifests[row] = ManifestClass(
+        ManifestClass = self.manifest.get_manifest(data_type)
+        if data_type in self.manifest.saved_manifests:
+            children = self.manifest.saved_manifests[data_type].sub_manifests
+        parent = item.parent()
+        if not parent:
+            sub_manifests = self.manifest.sub_manifests
+        else:
+            row -= 1
+            model = self.model()
+            parent_result = model.item(parent.row(), self.COL_PREVIEW).result
+            parent_manifest = parent_result.manifest
+            sub_manifests = parent_manifest.sub_manifests
+        sub_manifests[row] = ManifestClass(
             label, size, data_type, self.manifest)
+        if data_type in self.manifest.saved_manifests:
+            self.manifest.sub_manifests[row].sub_manifests = children
         self.refresh_view()
 
     def on_selectionChanged(self, destination, origin):
@@ -99,40 +114,60 @@ class DeconstructTreeView(QTreeView):
             row = destination.indexes()[0].row()
         except IndexError:
             row = 0
-        item = self.model().item(row, self.COL_PREVIEW).result
-        self.qHexEdit.setSelection(item.index, item.index + item.size)
+        cell = self.model().item(row, self.COL_PREVIEW)
+        if cell:
+            item = cell.result
+            self.qHexEdit.setSelection(item.index, item.index + item.size)
 
     def add_row(self, label="", size="", data_type="", parent=None):
         """
 
         :type data_type: str
         """
-        if not parent:
-            parent = self.model().invisibleRootItem()
+        manifest = self.manifest
+        selectedRows = self.selectionModel().selectedRows()
+        if len(selectedRows) == 1:
+            model = self.model()
+            parent_index = model.parent(selectedRows[0])
+            parent_item = model.item(parent_index.row(), self.COL_PREVIEW)
+            sub_manifest = parent_item.result.manifest
+            if type(sub_manifest) is ManifestCustom:
+                manifest = sub_manifest
         if not size:
             # size = hex(self.getSelectionSize())
             size = str(self.get_selection_size())
         if not data_type:
             data_type = "bytes"
-        ManifestClass = ManifestMain.get_manifest(data_type)
-        self.manifest.add(ManifestClass(label, size))
+        ManifestClass = self.manifest.get_manifest(data_type)
+        manifest.add(ManifestClass(label, size))
+        if type(manifest) is not ManifestMain:
+            self.manifest.saved_manifests[manifest.type_name] = manifest
         self.refresh_view()
 
     def refresh_view(self):
-        root = self.model().invisibleRootItem()
-        root.removeRows(0, root.rowCount())
-        main_result = self.manifest(bytes(self.qHexEdit.data()))
-        for manifest, result in zip(self.manifest, main_result.data[0]):
-            parent = root
+        def build_row(result):
             preview = QStandardItem(str(result.data))
             preview.setEditable(False)
             preview.result = result
-            parent.appendRow([
-                QStandardItem(manifest.label),
-                QStandardItem(manifest._size),
-                QStandardItem(manifest.type()),
+            return [
+                QStandardItem(result.manifest.label),
+                QStandardItem(result.manifest._size),
+                QStandardItem(result.manifest.type()),
                 preview,
-            ])
+            ]
+        root = self.model().invisibleRootItem()
+        root.removeRows(0, root.rowCount())
+        main_result = self.manifest(bytes(self.qHexEdit.data()))
+        model = self.model()
+        for result in main_result.data[0]:
+            root.appendRow(build_row(result))
+            if type(result) is ParsedCustom:
+                parent_item = model.item(root.rowCount() - 1)
+                for i, array_index in enumerate(result.data):
+                    parent_item.appendRow([QStandardItem(str(i))])
+                    for sub_result in array_index:
+                        index_item = model.item(root.rowCount() - 1)
+                        index_item.appendRow(build_row(sub_result))
         self.covered_size = main_result.size + main_result.index
 
     def get_selection_size(self):

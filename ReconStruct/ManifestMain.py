@@ -46,11 +46,11 @@ class ManifestMain(ManifestCustom):
 
     def __init__(self):
         super(ManifestMain, self).__init__("Main", 1, 'main', None)
+        self.saved_manifests = dict()
 
-    @classmethod
-    def get_manifest(cls, item):
-        if item in cls.__manifest_types:
-            return cls.__manifest_types[item]
+    def get_manifest(self, item):
+        if item in self.__manifest_types:
+            return self.__manifest_types[item]
         else:
             return ManifestCustom,
 

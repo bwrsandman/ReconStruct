@@ -55,7 +55,8 @@ class ManifestBase(object):
 
 
 class ParsedBase(object):
-    def __init__(self, data, index, size):
+    def __init__(self, manifest, data, index, size):
+        self.manifest = manifest
         self.data = data
         self.index = index
         self.size = size

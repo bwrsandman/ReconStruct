@@ -32,10 +32,14 @@ class ManifestStr(ManifestBase):
 
     def __call__(self, data, start=0):
         try:
-            return ParsedStr(data[start:start + self.size].decode("utf-8"),
-                             start, self.size)
+            return ParsedStr(
+                self,
+                data[start:start + self.size].decode("utf-8"),
+                start,
+                self.size
+            )
         except UnicodeError as e:
-            return ParsedStr(str(e), start, self.size)
+            return ParsedStr(self, str(e), start, self.size)
 
     @classmethod
     def type(cls):
@@ -43,5 +47,5 @@ class ManifestStr(ManifestBase):
 
 
 class ParsedStr(ParsedBase):
-    def __init__(self, data, index, size):
-        super(ParsedStr, self).__init__(data, index, size)
+    def __init__(self, manifest, data, index, size):
+        super(ParsedStr, self).__init__(manifest, data, index, size)

@@ -93,7 +93,7 @@ class ManifestCustom(ManifestBase):
                 start += result.size
                 self.current_data[manifest.label] = result
             ret.append(sub_ret)
-        return ParsedCustom(ret, index, parsed)
+        return ParsedCustom(self, ret, index, parsed)
 
     def __iter__(self):
         return self.sub_manifests.__iter__()
@@ -103,6 +103,6 @@ class ManifestCustom(ManifestBase):
 
 
 class ParsedCustom(ParsedBase):
-    def __init__(self, data, index, size):
+    def __init__(self, manifest, data, index, size):
         size = sum(sum(y.size for y in x) for x in data)
-        super(ParsedCustom, self).__init__(data, index, size)
+        super(ParsedCustom, self).__init__(manifest, data, index, size)

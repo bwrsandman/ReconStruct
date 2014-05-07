@@ -36,13 +36,17 @@ class ManifestInt(ManifestBase):
         sub_data = data[start:start + self.size]
         try:
             return ParsedInt(
-                int.from_bytes(sub_data, self.byteorder), start, self.size)
+                self,
+                int.from_bytes(sub_data, self.byteorder),
+                start,
+                self.size
+            )
         except AttributeError:
             try:
                 return ParsedInt(
-                    int(sub_data.encode('hex'), 16), start, self.size)
+                    self, int(sub_data.encode('hex'), 16), start, self.size)
             except ValueError:
-                return ParsedInt(0, start, self.size)
+                return ParsedInt(self, 0, start, self.size)
 
     @classmethod
     def type(cls):
@@ -50,5 +54,5 @@ class ManifestInt(ManifestBase):
 
 
 class ParsedInt(ParsedBase):
-    def __init__(self, data, index, size):
-        super(ParsedInt, self).__init__(data, index, size)
+    def __init__(self, manifest, data, index, size):
+        super(ParsedInt, self).__init__(manifest, data, index, size)
