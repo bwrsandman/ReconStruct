@@ -7,18 +7,35 @@ ReconStruct
 
 Qt 5 tool to help reverse engineer binary file formats, such as game files.
 
-Dependencies
-------------
+System Dependencies
+-------------------
+
+* qt5-base
+* libxkbcommon-x11
+* PyQt5
 
 ReconStruct needs the python bindings of QHexEdit.
 
 The following needs to be run to install the bindings in /home.
 
-```
+```bash
 cd ReconStruct
 git submodule init
+git submodule update
+cd QHexEdit/src
+qmake .
+make
+sudo make install
 cd QHexEdit/python
+./build.sh
 python setup.py install --user
+```
+
+Python Dependencies
+-------------------
+See requirements.txt or run
+```bash
+pip install -r requirements.txt
 ```
 
 Note
