@@ -159,15 +159,20 @@ class DeconstructTreeView(QTreeView):
         root.removeRows(0, root.rowCount())
         main_result = self.manifest(bytes(self.qHexEdit.data()))
         model = self.model()
+        # Every root level node
         for result in main_result.data[0]:
             root.appendRow(build_row(result))
-            if type(result) is ParsedCustom:
-                parent_item = model.item(root.rowCount() - 1)
-                for i, array_index in enumerate(result.data):
-                    parent_item.appendRow([QStandardItem(str(i))])
-                    for sub_result in array_index:
-                        index_item = model.item(root.rowCount() - 1)
-                        index_item.appendRow(build_row(sub_result))
+            if type(result) is not ParsedCustom:
+                continue
+            # Custom nodes have tree representation of their data
+            parent_item = model.item(root.rowCount() - 1)
+            # For the size of custom node, add an index indicator (e.g. [1])
+            for i, array_index in enumerate(result.data):
+                index_item = QStandardItem(str(i))
+                parent_item.appendRow([index_item])
+                # In a level under index indicator, show data types
+                for sub_result in array_index:
+                    index_item.appendRow(build_row(sub_result))
         self.covered_size = main_result.size + main_result.index
 
     def get_selection_size(self):
