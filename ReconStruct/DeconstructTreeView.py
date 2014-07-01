@@ -130,9 +130,10 @@ class DeconstructTreeView(QTreeView):
             model = self.model()
             parent_index = model.parent(selectedRows[0])
             parent_item = model.item(parent_index.row(), self.COL_PREVIEW)
-            sub_manifest = parent_item.result.manifest
-            if type(sub_manifest) is ManifestCustom:
-                manifest = sub_manifest
+            if parent_item:  # In case we are not in a custom tree
+                sub_manifest = parent_item.result.manifest
+                if type(sub_manifest) is ManifestCustom:
+                    manifest = sub_manifest
         if not size:
             # size = hex(self.getSelectionSize())
             size = str(self.get_selection_size())
