@@ -22,11 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
     from ReconStruct.ManifestInt import ManifestInt
+    from ReconStruct.ManifestBool import ManifestBool
     from ReconStruct.ManifestStr import ManifestStr
     from ReconStruct.ManifestBytes import ManifestBytes
     from ReconStruct.ManifestCustom import ManifestCustom
 except ImportError:
     from ManifestInt import ManifestInt
+    from ManifestBool import ManifestBool
     from ManifestStr import ManifestStr
     from ManifestBytes import ManifestBytes
     from ManifestCustom import ManifestCustom
@@ -39,6 +41,7 @@ class ManifestMain(ManifestCustom):
     __manifest_types = {
         ManifestClass.type(): ManifestClass for ManifestClass in (
             ManifestInt,
+            ManifestBool,
             ManifestStr,
             ManifestBytes,
         )
