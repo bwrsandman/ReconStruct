@@ -34,7 +34,7 @@ class ManifestInt(ManifestBase):
     def __call__(self, data, start=0):
         sub_data = data[start:start + self.size]
         try:
-            return ParsedInt(
+            return self.parser()(
                 self,
                 int.from_bytes(sub_data, self.byteorder),
                 start,
@@ -42,14 +42,18 @@ class ManifestInt(ManifestBase):
             )
         except AttributeError:
             try:
-                return ParsedInt(
+                return self.parser()(
                     self, int(sub_data.encode('hex'), 16), start, self.size)
             except ValueError:
-                return ParsedInt(self, 0, start, self.size)
+                return self.parser()(self, 0, start, self.size)
 
     @classmethod
     def type(cls):
         return 'int'
+
+    @classmethod
+    def parser(cls):
+        return ParsedInt
 
 
 class ParsedInt(ParsedBase):

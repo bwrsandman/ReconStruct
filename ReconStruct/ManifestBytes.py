@@ -31,7 +31,7 @@ class ManifestBytes(ManifestBase):
         super(ManifestBytes, self).__init__(label, size, parent)
 
     def __call__(self, data, start=0):
-        return ParsedBytes(
+        return self.parser()(
             self,
             " ".join(map(hex, data[start:start + self.size])),
             start,
@@ -41,6 +41,10 @@ class ManifestBytes(ManifestBase):
     @classmethod
     def type(cls):
         return 'bytes'
+
+    @classmethod
+    def parser(cls):
+        return ParsedBytes
 
 
 class ParsedBytes(ParsedBase):

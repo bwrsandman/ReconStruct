@@ -93,13 +93,17 @@ class ManifestCustom(ManifestBase):
                 start += result.size
                 self.current_data[manifest.label] = result
             ret.append(sub_ret)
-        return ParsedCustom(self, ret, index, parsed)
+        return self.parser()(self, ret, index, parsed)
 
     def __iter__(self):
         return self.sub_manifests.__iter__()
 
     def type(self):
         return self.type_name
+
+    @classmethod
+    def parser(cls):
+        return ParsedCustom
 
 
 class ParsedCustom(ParsedBase):

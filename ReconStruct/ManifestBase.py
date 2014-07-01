@@ -56,6 +56,10 @@ class ManifestBase(object):
             ret = 0
         return ret
 
+    @classmethod
+    def parser(cls):
+        return ParsedBase
+
 
 class ParsedBase(object):
     def __init__(self, manifest, data, index, size):
