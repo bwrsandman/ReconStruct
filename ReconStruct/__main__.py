@@ -25,6 +25,8 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTranslator
 
 import sys
+import os
+import argparse
 
 try:
     from ReconStruct.mainwindow import MainWindow
@@ -34,9 +36,14 @@ except ImportError:
 
 def main():
     app = QApplication(sys.argv)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("binary", nargs='?', help="Binary File to open.")
+    args = parser.parse_args()
     translator = QTranslator()
     app.installTranslator(translator)
     win = MainWindow()
+    if args.binary:
+        win.loadBinary(os.path.expanduser(args.binary))
     return app, win
 
 
