@@ -26,11 +26,10 @@ except ImportError:
 
 
 class ManifestInt(ManifestBase):
-    """Descriptor manifest which represents integers (currently only supports
-    big-endian)"""
+    """Descriptor manifest which represents integers"""
+
     def __init__(self, label, size, type_name='int', parent=None):
         super(ManifestInt, self).__init__(label, size, parent)
-        self.byteorder = "big"
 
     def __call__(self, data, start=0):
         sub_data = data[start:start + self.size]

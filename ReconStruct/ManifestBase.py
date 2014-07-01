@@ -24,7 +24,10 @@ class ManifestBase(object):
     """Base class for all descriptions of data representation
 
     Provide :func:`size`, :func:`__init__`, for this family of classes.
+    Provide `byteorder` either little or big
     """
+
+    byteorder = 'little'
 
     def __init__(self, label, size, parent=None):
         self.label = label
