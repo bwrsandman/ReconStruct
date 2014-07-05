@@ -95,7 +95,7 @@ class MainWindow(QMainWindow):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
             with open(filename, 'r') as f:
-                self.treeView.manifest = Markdown.fromMarkdown(f.read())
+                self.treeView.manifest = Markdown.fromMarkdown(f.read(), self)
         except ValueError as e:
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)

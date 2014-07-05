@@ -24,10 +24,8 @@ from markdownwriter import MarkdownWriter, MarkdownTable
 from markdown import Markdown, util
 
 try:
-    from ReconStruct import __main__
     from ReconStruct.ManifestMain import ManifestMain
 except ImportError:
-    import __main__
     from ManifestMain import ManifestMain
 
 
@@ -73,13 +71,12 @@ def toMarkdown(manifest):
     return writer.getStream()
 
 
-def fromMarkdown(source):
-    tr = __main__.app.tr
+def fromMarkdown(source, app):
 
     def _getElemFromSource(source):
         md = Markdown(extensions=['tables'])
         if not source.strip():
-            raise ValueError(tr(
+            raise ValueError(app.tr(
                 "Schema file is empty."
             ))
         try:
@@ -99,33 +96,33 @@ def fromMarkdown(source):
         else:
             parent_manifest = main_manifest.saved_manifests[data_type]
         if len(table) != 2:
-            raise ValueError(tr(
+            raise ValueError(app.tr(
                 "Type table does not have two expected sub elements."
             ))
         thead, tbody = table
         if thead.tag != 'thead' or tbody.tag != 'tbody':
-            raise ValueError(tr(
+            raise ValueError(app.tr(
                 "Type table does not have correct tags for sub elements. "
                 "Expected ('thead', 'tbody'), got ('%s', '%s')." %
                 (thead.tag, tbody.tag)
             ))
         table_headers = [thead[0][0].text, thead[0][1].text, thead[0][2].text]
         if table_headers != headers:
-            raise ValueError(tr(
+            raise ValueError(app.tr(
                 "Type table does not have the correct headers. "
                 "Expected %s, got %s." % (headers, table_headers)
             ))
         for line in tbody:
             if len(line) != 3:
-                raise ValueError(tr(
+                raise ValueError(app.tr(
                     "Row of type table has incorrect number of columns. "
                     "Expected 3, got %d." % len(line)
                 ))
             label, size, data_type = (j.text.strip() for j in line)
             if not size:
-                raise ValueError(tr("Row does not have a value for size."))
+                raise ValueError(app.tr("Row does not have a value for size."))
             if not data_type:
-                raise ValueError(tr("Row does not have a value for type."))
+                raise ValueError(app.tr("Row does not have a value for type."))
             manifest = main_manifest.get_manifest(data_type)
             parent_manifest.add(manifest(label, size, data_type))
             continue
@@ -133,32 +130,32 @@ def fromMarkdown(source):
     root = _getElemFromSource(source)
     main_manifest = ManifestMain()
     if len(root) < 2:
-        raise ValueError(tr("Schema does not have data type information."))
+        raise ValueError(app.tr("Schema does not have data type information."))
     main_h1 = root[0]
     if main_h1.tag != "h1":
-        raise ValueError(tr("Schema is missing main title."))
+        raise ValueError(app.tr("Schema is missing main title."))
     if main_h1.text != "main":
-        raise ValueError(tr(
+        raise ValueError(app.tr(
             "Schema main title is mislabeled. Expected 'main', got '%s'."
             % main_h1.text
         ))
     main_table = root[1]
     if main_table.tag != "table":
-        raise ValueError(tr("Schema main data table is missing."))
+        raise ValueError(app.tr("Schema main data table is missing."))
     _readTable(main_manifest, main_table)
 
     if len(root) % 2 != 0:
-        raise ValueError(tr(
+        raise ValueError(app.tr(
             "Schema is missing data type information for custom types."
         ))
     for i in range(2, len(root), 2):
         sub_h2 = root[i]
         sub_table = root[i + 1]
         if sub_h2.tag != "h2":
-            raise ValueError(tr("Schema is missing custom data type title."))
+            raise ValueError(app.tr("Schema is missing custom data type title."))
         type_name = sub_h2.text.strip()
         if sub_table.tag != "table":
-            raise ValueError(tr(
+            raise ValueError(app.tr(
                 "Schema custom data table is missing for %s." % type_name
             ))
         _readTable(main_manifest, sub_table, type_name)
