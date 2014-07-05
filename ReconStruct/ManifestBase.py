@@ -29,7 +29,7 @@ class ManifestBase(object):
 
     byteorder = 'little'
 
-    def __init__(self, label, size, parent=None):
+    def __init__(self, label, size, type_name=None, parent=None):
         self.label = label
         self._size = size
         self.parent = parent

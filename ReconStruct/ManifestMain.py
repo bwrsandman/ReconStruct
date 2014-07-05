@@ -51,15 +51,28 @@ class ManifestMain(ManifestCustom):
         super(ManifestMain, self).__init__("Main", 1, 'main', None)
         self.saved_manifests = dict()
 
+    def add(self, manifest):
+        """Add child manifest to saved_manifests
+
+        :param manifest: A new child of this manifest.
+        :type manifest: ManifestBase.
+        """
+        super(ManifestMain, self).add(manifest)
+        if (manifest.type() not in self.__manifest_types.keys()
+                and manifest.type() != 'main'):
+            self.saved_manifests[manifest.type_name] = manifest
+
     def get_manifest(self, item):
         if item in self.__manifest_types:
             return self.__manifest_types[item]
         else:
-            return ManifestCustom,
+            return ManifestCustom
 
     @classmethod
     def get_type_names(cls):
         return cls.__manifest_types.keys()
 
     def add_custom_type(self, name):
-        self.__manifest_types[name] = ManifestCustom
+        self.__manifest_types[name] = self.__manifest_types.get(
+            name, ManifestCustom
+        )

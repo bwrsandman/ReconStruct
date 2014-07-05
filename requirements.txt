@@ -1,2 +1,3 @@
 wheel>=0.22.0
 Equation>=1.1
+https://github.com/bwrsandman/python-markup-writer/archive/markdowntables.tar.gz

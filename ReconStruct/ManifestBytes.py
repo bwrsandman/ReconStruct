@@ -33,7 +33,7 @@ class ManifestBytes(ManifestBase):
     def __call__(self, data, start=0):
         return self.parser()(
             self,
-            " ".join(map(hex, data[start:start + self.size])),
+            " ".join(map(hex, map(ord, data[start:start + self.size]))),
             start,
             self.size
         )

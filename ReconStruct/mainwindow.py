@@ -22,14 +22,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QFileDialog,
+    QApplication,
+    QErrorMessage,
+)
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5 import uic
 
 try:
+    from ReconStruct.SchemaIO import Markdown
     from ReconStruct.DeconstructTreeView import DeconstructTreeView
 except ImportError:
+    from SchemaIO import Markdown
     from DeconstructTreeView import DeconstructTreeView
 
 
@@ -85,10 +92,23 @@ class MainWindow(QMainWindow):
         pass
 
     def loadSchema(self, filename):
-        pass
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        try:
+            with open(filename, 'r') as f:
+                self.treeView.manifest = Markdown.fromMarkdown(f.read())
+        except ValueError as e:
+            QErrorMessage(self).showMessage(
+                self.tr('Format Error: ') + str(e)
+            )
+        finally:
+            self.treeView.refresh_view()
+            QApplication.restoreOverrideCursor()
 
     def saveSchema(self, filename):
-        pass
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        with open(filename, 'w') as f:
+            f.write(Markdown.toMarkdown(self.treeView.manifest))
+        QApplication.restoreOverrideCursor()
 
     def addRow(self, label="", size="", data_type="", parent=None):
         self.treeView.add_row(label, size, data_type, parent)

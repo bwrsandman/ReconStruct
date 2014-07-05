@@ -38,12 +38,15 @@ def main():
     app = QApplication(sys.argv)
     parser = argparse.ArgumentParser()
     parser.add_argument("binary", nargs='?', help="Binary File to open.")
+    parser.add_argument("-s", "--schema", help="Load schema file of binary format.")
     args = parser.parse_args()
     translator = QTranslator()
     app.installTranslator(translator)
     win = MainWindow()
     if args.binary:
         win.loadBinary(os.path.expanduser(args.binary))
+    if args.schema:
+        win.loadSchema(os.path.expanduser(args.schema))
     return app, win
 
 

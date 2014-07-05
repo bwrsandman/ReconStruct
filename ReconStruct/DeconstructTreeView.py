@@ -135,7 +135,6 @@ class DeconstructTreeView(QTreeView):
                 if type(sub_manifest) is ManifestCustom:
                     manifest = sub_manifest
         if not size:
-            # size = hex(self.getSelectionSize())
             size = str(self.get_selection_size())
         if not data_type:
             data_type = "bytes"
