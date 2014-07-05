@@ -31,6 +31,7 @@ except ImportError:
 
 # Not to be translated
 headers = ["Label", "Size", "Type"]
+attr_headers = ["Attribute", "Value"]
 
 
 def toMarkdown(manifest):
@@ -68,6 +69,13 @@ def toMarkdown(manifest):
             ])
         writer.addTable(table)
         writer.addSimpleLineBreak()
+    attrs = manifest.getFileAttributes()
+    if attrs:
+        table = MarkdownTable(attr_headers)
+        for key, val in attrs.iteritems():
+            table.addRow([key, val])
+        writer.addHeader('Attributes')
+        writer.addTable(table)
     return writer.getStream()
 
 
@@ -90,11 +98,7 @@ def fromMarkdown(source, app):
         # Parse the high-level elements.
         return md.parser.parseDocument(lines).getroot()
 
-    def _readTable(main_manifest, table, data_type='main'):
-        if data_type == 'main':
-            parent_manifest = main_manifest
-        else:
-            parent_manifest = main_manifest.saved_manifests[data_type]
+    def readTable(table, headers):
         if len(table) != 2:
             raise ValueError(app.tr(
                 "Type table does not have two expected sub elements."
@@ -106,19 +110,29 @@ def fromMarkdown(source, app):
                 "Expected ('thead', 'tbody'), got ('%s', '%s')." %
                 (thead.tag, tbody.tag)
             ))
-        table_headers = [thead[0][0].text, thead[0][1].text, thead[0][2].text]
+        table_headers = [t.text for t in thead[0]]
         if table_headers != headers:
             raise ValueError(app.tr(
                 "Type table does not have the correct headers. "
                 "Expected %s, got %s." % (headers, table_headers)
             ))
         for line in tbody:
-            if len(line) != 3:
+            if len(line) != len(headers):
                 raise ValueError(app.tr(
                     "Row of type table has incorrect number of columns. "
-                    "Expected 3, got %d." % len(line)
+                    "Expected %d, got %d." % (len(headers), len(line))
                 ))
-            label, size, data_type = (j.text.strip() for j in line)
+        return ((j.text.strip() for j in row) for row in tbody)
+
+    def _readAttributesTable(table):
+        return dict(readTable(table, attr_headers))
+
+    def _readManifestTable(main_manifest, table, data_type='main'):
+        if data_type == 'main':
+            parent_manifest = main_manifest
+        else:
+            parent_manifest = main_manifest.saved_manifests[data_type]
+        for label, size, data_type in readTable(table, headers):
             if not size:
                 raise ValueError(app.tr("Row does not have a value for size."))
             if not data_type:
@@ -126,7 +140,6 @@ def fromMarkdown(source, app):
             manifest = main_manifest.get_manifest(data_type)
             parent_manifest.add(manifest(label, size, data_type))
             continue
-
     root = _getElemFromSource(source)
     main_manifest = ManifestMain()
     if len(root) < 2:
@@ -142,13 +155,21 @@ def fromMarkdown(source, app):
     main_table = root[1]
     if main_table.tag != "table":
         raise ValueError(app.tr("Schema main data table is missing."))
-    _readTable(main_manifest, main_table)
+    _readManifestTable(main_manifest, main_table)
 
     if len(root) % 2 != 0:
         raise ValueError(app.tr(
             "Schema is missing data type information for custom types."
         ))
-    for i in range(2, len(root), 2):
+
+    # Attributes appended at the end
+    end_index = len(root)
+    if (len(root) >= 2 and root[-2].tag == 'h1'
+            and root[-2].text == 'Attributes'):
+        end_index -= 2
+        main_manifest.setFileAttributes(_readAttributesTable(root[-1]))
+
+    for i in range(2, end_index, 2):
         sub_h2 = root[i]
         sub_table = root[i + 1]
         if sub_h2.tag != "h2":
@@ -158,5 +179,5 @@ def fromMarkdown(source, app):
             raise ValueError(app.tr(
                 "Schema custom data table is missing for %s." % type_name
             ))
-        _readTable(main_manifest, sub_table, type_name)
+        _readManifestTable(main_manifest, sub_table, type_name)
     return main_manifest

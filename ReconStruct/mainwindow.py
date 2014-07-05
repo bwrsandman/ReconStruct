@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5 import uic
+import logging
 
 try:
     from ReconStruct.SchemaIO import Markdown
@@ -100,15 +101,24 @@ class MainWindow(QMainWindow):
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)
             )
+            logging.exception(e)
         finally:
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
 
     def saveSchema(self, filename):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        with open(filename, 'w') as f:
-            f.write(Markdown.toMarkdown(self.treeView.manifest))
-        QApplication.restoreOverrideCursor()
+        try:
+            out = Markdown.toMarkdown(self.treeView.manifest)
+            with open(filename, 'w') as f:
+                f.write(out)
+        except Exception as e:
+            QErrorMessage(self).showMessage(
+                self.tr('Error while saving: ') + str(e)
+            )
+            logging.exception(e)
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def addRow(self, label="", size="", data_type="", parent=None):
         self.treeView.add_row(label, size, data_type, parent)

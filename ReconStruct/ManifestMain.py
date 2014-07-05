@@ -47,6 +47,8 @@ class ManifestMain(ManifestCustom):
         )
     }
 
+    compression = None
+
     def __init__(self):
         super(ManifestMain, self).__init__("Main", 1, 'main', None)
         self.saved_manifests = dict()
@@ -76,3 +78,22 @@ class ManifestMain(ManifestCustom):
         self.__manifest_types[name] = self.__manifest_types.get(
             name, ManifestCustom
         )
+
+    def setFileAttributes(self, attrs):
+        self.compression = attrs.get('compression')
+        endianness = attrs.get('endianness')
+        if endianness is not None:
+            if endianness not in ('little', 'big'):
+                raise ValueError('Unexpected endianness: %s' % endianness)
+            self.byteorder = endianness
+
+    def getFileAttributes(self):
+        attrs = {
+            'endianness': self.byteorder,
+        }
+
+        if self.compression:
+            attrs['compression'] = self.compression
+
+        return attrs
+

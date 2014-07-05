@@ -42,8 +42,11 @@ class ManifestInt(ManifestBase):
             )
         except AttributeError:
             try:
-                return self.parser()(
-                    self, int(sub_data.encode('hex'), 16), start, self.size)
+                hex_data = sub_data
+                if self.byteorder == 'little':
+                    hex_data = hex_data[::-1]
+                hex_data = hex_data.encode('hex')
+                return self.parser()(self, int(hex_data, 16), start, self.size)
             except ValueError:
                 return self.parser()(self, 0, start, self.size)
 
