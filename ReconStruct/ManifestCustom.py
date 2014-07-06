@@ -18,12 +18,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+import logging
 from Equation import Expression
 
 try:
     from ReconStruct.ManifestBase import ManifestBase, ParsedBase
 except ImportError:
     from ManifestBase import ManifestBase, ParsedBase
+
+
+logger = logging.getLogger(__name__)
 
 
 class ManifestCustom(ManifestBase):
@@ -60,7 +64,7 @@ class ManifestCustom(ManifestBase):
         :returns:  int -- the parsed size.
         """
         variables = {}
-        expr = Expression(label)
+        expr = Expression(label or '0')
         for var in expr:
             if var in self.current_data:
                 value = self.current_data[var].data
@@ -74,7 +78,12 @@ class ManifestCustom(ManifestBase):
                 except ValueError:
                     value = 0
             variables[var] = value
-        return expr(**variables)  # pylint: disable=W0142
+        try:
+            return expr(**variables)  # pylint: disable=W0142
+        except Exception as e:
+            logger.exception(e)
+            logger.error("expr='%s', variables=%s", label, variables)
+            return 0
 
     def __call__(self, data, start=0):
         """Parse data with child manifests caching computed values in

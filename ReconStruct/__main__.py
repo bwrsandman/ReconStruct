@@ -27,6 +27,9 @@ from PyQt5.QtCore import QTranslator
 import sys
 import os
 import argparse
+import logging
+
+logging.basicConfig()
 
 try:
     from ReconStruct.mainwindow import MainWindow

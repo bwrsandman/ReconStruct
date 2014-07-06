@@ -43,6 +43,9 @@ except ImportError:
     from DeconstructTreeView import DeconstructTreeView
 
 
+logger = logging.getLogger(__name__)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -105,7 +108,7 @@ class MainWindow(QMainWindow):
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)
             )
-            logging.exception(e)
+            logger.exception(e)
         finally:
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
@@ -122,7 +125,7 @@ class MainWindow(QMainWindow):
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)
             )
-            logging.exception(e)
+            logger.exception(e)
         finally:
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
@@ -137,7 +140,7 @@ class MainWindow(QMainWindow):
             QErrorMessage(self).showMessage(
                 self.tr('Error while saving: ') + str(e)
             )
-            logging.exception(e)
+            logger.exception(e)
         finally:
             QApplication.restoreOverrideCursor()
 
