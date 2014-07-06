@@ -206,6 +206,9 @@ class DeconstructTreeView(QTreeView):
                 # In a level under index indicator, show data types
                 for sub_result in array_index:
                     index_item.appendRow(build_row(sub_result))
+                if i == 0:
+                    self.setExpanded(index_item.index(), True)
+            self.setExpanded(parent_item.index(), True)
         self.covered_size = main_result.size + main_result.index
 
     def get_selection_size(self):
