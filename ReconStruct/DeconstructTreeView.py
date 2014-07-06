@@ -104,14 +104,45 @@ class DeconstructTreeView(QTreeView):
         self.refresh_view()
 
     def on_selectionChanged(self, destination, origin):
+        """From selection, go down the tree to get the proper item
+        from that item, find result which is in the COL_PREVIEW column
+        careful that index rows of custom types don't have COL_PREVIEW column
+        """
         try:
-            row = destination.indexes()[0].row()
+            selection_index = destination.indexes()[0]
+            parent_index = selection_index.parent()
+            row_indices = []
+            while parent_index.row() != -1:
+                row_indices.append(parent_index.row())
+                parent_index = parent_index.parent()
+            if row_indices:
+                cell = self.model().item(row_indices[-1])
+                for row in row_indices[-2::-1] + [selection_index.row()]:
+                    cell = cell.child(row)
+                if (cell.parent() and
+                        cell.parent().columnCount() > self.COL_PREVIEW):
+                    cell = cell.parent().child(cell.row(), self.COL_PREVIEW)
+            else:
+                cell = self.model().item(selection_index.row(),
+                                         self.COL_PREVIEW)
         except IndexError:
-            row = 0
-        cell = self.model().item(row, self.COL_PREVIEW)
-        if cell:
+            cell = self.model().item(0, self.COL_PREVIEW)
+        if cell is None:
+            start = 0
+            end = 0
+        elif cell.column() == self.COL_PREVIEW:
             item = cell.result
-            self.qHexEdit.setSelection(item.index, item.index + item.size)
+            start = item.index
+            end = start + item.size
+        elif cell.hasChildren():
+            start = cell.child(0, self.COL_PREVIEW).result.index
+            last_result = cell.child(cell.rowCount() - 1,
+                                     self.COL_PREVIEW).result
+            end = last_result.index + last_result.size
+        else:
+            start = 0
+            end = 0
+        self.qHexEdit.setSelection(start, end)
 
     def _get_parent_manifest(self, selection_index):
         """From selection index, get manifest which matches
@@ -201,7 +232,7 @@ class DeconstructTreeView(QTreeView):
             parent_item = model.item(root.rowCount() - 1)
             # For the size of custom node, add an index indicator (e.g. [1])
             for i, array_index in enumerate(result.data):
-                index_item = QStandardItem(str(i))
+                index_item = QStandardItem("[%d]" % i)
                 parent_item.appendRow([index_item])
                 # In a level under index indicator, show data types
                 for sub_result in array_index:
