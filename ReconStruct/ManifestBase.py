@@ -30,6 +30,7 @@ class ManifestBase(object):
     byteorder = 'little'
 
     def __init__(self, label, size, type_name=None, parent=None):
+        assert isinstance(parent, ManifestBase) or parent is None
         self.label = label
         self._size = size
         self.parent = parent

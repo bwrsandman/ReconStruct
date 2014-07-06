@@ -28,7 +28,7 @@ except ImportError:
 class ManifestStr(ManifestBase):
     """Descriptor manifest which parses strings"""
     def __init__(self, label, size, type_name='str', parent=None):
-        super(ManifestStr, self).__init__(label, size, parent)
+        super(ManifestStr, self).__init__(label, size, type_name, parent)
 
     def __call__(self, data, start=0):
         try:

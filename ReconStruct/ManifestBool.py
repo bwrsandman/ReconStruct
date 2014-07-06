@@ -29,7 +29,7 @@ class ManifestBool(ManifestInt):
     """Descriptor manifest which represents Booleans"""
 
     def __init__(self, label, size, type_name='bool', parent=None):
-        super(ManifestBool, self).__init__(label, size, parent)
+        super(ManifestBool, self).__init__(label, size, type_name, parent)
 
     def __call__(self, data, start=0):
         return super(ManifestBool, self).__call__(data, start)

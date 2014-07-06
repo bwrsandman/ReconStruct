@@ -28,7 +28,7 @@ except ImportError:
 class ManifestBytes(ManifestBase):
     """Descriptor manifest which parses bytestrings"""
     def __init__(self, label, size, type_name='bytes', parent=None):
-        super(ManifestBytes, self).__init__(label, size, parent)
+        super(ManifestBytes, self).__init__(label, size, type_name, parent)
 
     def __call__(self, data, start=0):
         return self.parser()(

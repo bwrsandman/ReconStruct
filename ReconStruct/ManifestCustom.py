@@ -32,7 +32,7 @@ class ManifestCustom(ManifestBase):
     Provide :func:`add` and :func:`actual_size_of`
     """
     def __init__(self, label, size, type_name, parent=None):
-        super(ManifestCustom, self).__init__(label, size, parent)
+        super(ManifestCustom, self).__init__(label, size, type_name, parent)
         self.sub_manifests = []
         self.current_data = dict()
         self.type_name = type_name

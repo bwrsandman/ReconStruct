@@ -29,7 +29,7 @@ class ManifestInt(ManifestBase):
     """Descriptor manifest which represents integers"""
 
     def __init__(self, label, size, type_name='int', parent=None):
-        super(ManifestInt, self).__init__(label, size, parent)
+        super(ManifestInt, self).__init__(label, size, type_name, parent)
 
     def __call__(self, data, start=0):
         sub_data = data[start:start + self.size]
