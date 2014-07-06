@@ -43,10 +43,10 @@ def main():
     translator = QTranslator()
     app.installTranslator(translator)
     win = MainWindow()
-    if args.binary:
-        win.loadBinary(os.path.expanduser(args.binary))
     if args.schema:
         win.loadSchema(os.path.expanduser(args.schema))
+    if args.binary:
+        win.loadBinary(os.path.expanduser(args.binary))
     return app, win
 
 

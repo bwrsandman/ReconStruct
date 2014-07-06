@@ -32,6 +32,8 @@ from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5 import uic
 import logging
+import gzip
+import bz2
 
 try:
     from ReconStruct.SchemaIO import Markdown
@@ -84,10 +86,25 @@ class MainWindow(QMainWindow):
 
     def loadBinary(self, filename):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-        with open(filename, 'rb') as f:
-            self.qHexEdit.setData(f.read())
-        QApplication.restoreOverrideCursor()
-        self._current_filename = filename
+        if self.treeView.manifest.compression == 'gzip':
+            reader = gzip.open
+        elif self.treeView.manifest.compression == 'bz2':
+            reader = bz2.BZ2File
+        else:
+            reader = open
+        try:
+            with reader(filename, 'rb') as f:
+                data = f.read()
+            self.qHexEdit.setData(data)
+            self._current_filename = filename
+        except IOError as e:
+            QErrorMessage(self).showMessage(
+                self.tr('Format Error: ') + str(e)
+            )
+            logging.exception(e)
+        finally:
+            self.treeView.refresh_view()
+            QApplication.restoreOverrideCursor()
 
     def saveBinary(self, filename):
         pass
