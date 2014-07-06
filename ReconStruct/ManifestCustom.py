@@ -37,13 +37,17 @@ class ManifestCustom(ManifestBase):
         self.current_data = dict()
         self.type_name = type_name
 
-    def add(self, manifest):
+    def add(self, manifest, index=None):
         """Add child manifests to this manifest and set their parent
 
         :param manifest: A new child of this manifest.
+        :param index: position in the child manifest list.
         :type manifest: ManifestBase.
         """
-        self.sub_manifests.append(manifest)
+        if index is None:
+            self.sub_manifests.append(manifest)
+        else:
+            self.sub_manifests.insert(index, manifest)
         manifest.parent = self
 
     def actual_size_of(self, label):
@@ -104,6 +108,17 @@ class ManifestCustom(ManifestBase):
     @classmethod
     def parser(cls):
         return ParsedCustom
+
+    def clean_up(self):
+        """Remove all sub_manifests and children thereof which are None"""
+        cleaned_up = []
+        for sub in self.sub_manifests:
+            if sub is None:
+                continue
+            if isinstance(sub, ManifestCustom):
+                sub.clean_up()
+            cleaned_up.append(sub)
+        self.sub_manifests = cleaned_up
 
 
 class ParsedCustom(ParsedBase):

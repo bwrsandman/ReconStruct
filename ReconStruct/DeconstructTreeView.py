@@ -84,6 +84,7 @@ class DeconstructTreeView(QTreeView):
         label = parent.child(row, self.COL_LABEL).text()
         size = parent.child(row, self.COL_SIZE).text()
         data_type = parent.child(row, self.COL_TYPE).text()
+        # adding a custom type
         if data_type == self.tr('custom'):
             data_type, ok = QInputDialog.getText(
                 self, self.tr("Create New Type"), self.tr("Name"))
@@ -94,15 +95,8 @@ class DeconstructTreeView(QTreeView):
         ManifestClass = self.manifest.get_manifest(data_type)
         if data_type in self.manifest.saved_manifests:
             children = self.manifest.saved_manifests[data_type].sub_manifests
-        parent = item.parent()
-        if not parent:
-            sub_manifests = self.manifest.sub_manifests
-        else:
-            row -= 1
-            model = self.model()
-            parent_result = model.item(parent.row(), self.COL_PREVIEW).result
-            parent_manifest = parent_result.manifest
-            sub_manifests = parent_manifest.sub_manifests
+        selected_row = self.selectionModel().selectedRows()[0]
+        sub_manifests = self._get_parent_manifest(selected_row).sub_manifests
         sub_manifests[row] = ManifestClass(
             label, size, data_type, self.manifest)
         if data_type in self.manifest.saved_manifests:
@@ -119,30 +113,68 @@ class DeconstructTreeView(QTreeView):
             item = cell.result
             self.qHexEdit.setSelection(item.index, item.index + item.size)
 
+    def _get_parent_manifest(self, selection_index):
+        """From selection index, get manifest which matches
+        TreeView Rows include indices which are not represented in manifest
+        tree structures, so skip them.
+
+        ManifestMain
+          Manifests[...]
+          Manifest Custom
+            Index            (SKIP)
+              Manifests[...]
+          Manifests[...]
+
+        """
+        manifest = self.manifest
+        parent_index = selection_index.parent()
+        row_indices = []
+        while parent_index.row() != -1:
+            row_indices.append(parent_index.row())
+            parent_index = parent_index.parent()
+        # Index was selected, don't do anything
+        if len(row_indices) % 2 == 1:
+            return None
+        # Traverse row indices backwards skipping every other index
+        for i in row_indices[::-2]:
+            manifest = manifest.sub_manifests[i]
+        return manifest
+
     def add_row(self, label="", size="", data_type="", parent=None):
         """
 
         :type data_type: str
         """
         manifest = self.manifest
-        selectedRows = self.selectionModel().selectedRows()
-        if len(selectedRows) == 1:
-            model = self.model()
-            parent_index = model.parent(selectedRows[0])
-            parent_item = model.item(parent_index.row(), self.COL_PREVIEW)
-            if parent_item:  # In case we are not in a custom tree
-                sub_manifest = parent_item.result.manifest
-                if type(sub_manifest) is ManifestCustom:
-                    manifest = sub_manifest
+        selected_rows = self.selectionModel().selectedRows()
+        index = None
+        if len(selected_rows) == 1:
+            selected_row = selected_rows[0]
+            manifest = self._get_parent_manifest(selected_row)
+            index = selected_row.row() + 1
+            if not manifest:
+                return
         if not size:
             size = str(self.get_selection_size())
         if not data_type:
             data_type = "bytes"
-        ManifestClass = self.manifest.get_manifest(data_type)
-        manifest.add(ManifestClass(label, size))
+        manifest_class = self.manifest.get_manifest(data_type)
+        manifest.add(manifest_class(label, size), index)
         if type(manifest) is not ManifestMain:
             self.manifest.saved_manifests[manifest.type_name] = manifest
         self.refresh_view()
+
+    def remove_row(self):
+        requires_refresh = False
+        for selection_index in self.selectionModel().selectedRows():
+            manifest = self._get_parent_manifest(selection_index)
+            if not manifest:
+                continue
+            requires_refresh = True
+            row = selection_index.row()
+            manifest.sub_manifests[row] = None
+        if requires_refresh:
+            self.refresh_view()
 
     def refresh_view(self):
         def build_row(result):
@@ -155,6 +187,7 @@ class DeconstructTreeView(QTreeView):
                 QStandardItem(result.manifest.type()),
                 preview,
             ]
+        self.manifest.clean_up()
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
         main_result = self.manifest(bytes(self.qHexEdit.data()))

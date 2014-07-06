@@ -84,6 +84,10 @@ class MainWindow(QMainWindow):
     def on_action_Add_triggered(self):
         self.addRow()
 
+    @pyqtSlot()
+    def on_action_Remove_triggered(self):
+        self.removeRow()
+
     def loadBinary(self, filename):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         if self.treeView.manifest.compression == 'gzip':
@@ -139,3 +143,6 @@ class MainWindow(QMainWindow):
 
     def addRow(self, label="", size="", data_type="", parent=None):
         self.treeView.add_row(label, size, data_type, parent)
+
+    def removeRow(self):
+        self.treeView.remove_row()

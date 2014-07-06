@@ -53,13 +53,14 @@ class ManifestMain(ManifestCustom):
         super(ManifestMain, self).__init__("Main", 1, 'main', None)
         self.saved_manifests = dict()
 
-    def add(self, manifest):
+    def add(self, manifest, index=None):
         """Add child manifest to saved_manifests
 
         :param manifest: A new child of this manifest.
+        :param index: position in the child manifest list.
         :type manifest: ManifestBase.
         """
-        super(ManifestMain, self).add(manifest)
+        super(ManifestMain, self).add(manifest, index)
         if (manifest.type() not in self.__manifest_types.keys()
                 and manifest.type() != 'main'):
             self.saved_manifests[manifest.type_name] = manifest
