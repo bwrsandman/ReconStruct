@@ -99,7 +99,7 @@ class DeconstructTreeView(QTreeView):
         else:
             children = []
         selected_row = self.selectionModel().selectedRows()[0]
-        manifest = self._get_parent_manifest(selected_row)
+        manifest, _ = self._get_parent_manifest(selected_row)
         sub_manifests = manifest.sub_manifests
         sub_manifests[row] = ManifestClass(
             label, size, data_type, manifest
@@ -168,13 +168,12 @@ class DeconstructTreeView(QTreeView):
         while parent_index.row() != -1:
             row_indices.append(parent_index.row())
             parent_index = parent_index.parent()
-        # Index was selected, don't do anything
-        if len(row_indices) % 2 == 1:
-            return None
+        # Index was selected, report this
+        is_indicator = len(row_indices) % 2 == 1
         # Traverse row indices backwards skipping every other index
         for i in row_indices[::-2]:
             manifest = manifest.sub_manifests[i]
-        return manifest
+        return manifest, is_indicator
 
     def add_row(self, label="", size="", data_type="", parent=None):
         """
@@ -186,7 +185,7 @@ class DeconstructTreeView(QTreeView):
         index = None
         if len(selected_rows) == 1:
             selected_row = selected_rows[0]
-            manifest = self._get_parent_manifest(selected_row)
+            manifest, _ = self._get_parent_manifest(selected_row)
             index = selected_row.row() + 1
             if not manifest:
                 return
@@ -203,8 +202,8 @@ class DeconstructTreeView(QTreeView):
     def remove_row(self):
         requires_refresh = False
         for selection_index in self.selectionModel().selectedRows():
-            manifest = self._get_parent_manifest(selection_index)
-            if not manifest:
+            manifest, is_indicator = self._get_parent_manifest(selection_index)
+            if is_indicator:
                 continue
             requires_refresh = True
             row = selection_index.row()
