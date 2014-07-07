@@ -64,21 +64,21 @@ class ManifestCustom(ManifestBase):
         :returns:  int -- the parsed size.
         """
         variables = {}
-        expr = Expression(label or '0')
-        for var in expr:
-            if var in self.current_data:
-                value = self.current_data[var].data
-            elif self.parent:
-                value = self.parent.actual_size_of(var)
-            else:
-                value = 0
-            if type(value) is not int:
-                try:
-                    value = int(value)
-                except ValueError:
-                    value = 0
-            variables[var] = value
         try:
+            expr = Expression(label or '0')
+            for var in expr:
+                if var in self.current_data:
+                    value = self.current_data[var].data
+                elif self.parent:
+                    value = self.parent.actual_size_of(var)
+                else:
+                    value = 0
+                if type(value) not in (int, bool):
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        value = 0
+                variables[var] = value
             return expr(**variables)  # pylint: disable=W0142
         except Exception as e:
             logger.exception(e)
