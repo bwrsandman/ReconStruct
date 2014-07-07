@@ -76,8 +76,8 @@ class ManifestMain(ManifestCustom):
         return cls.__manifest_types.keys()
 
     def add_custom_type(self, name):
-        self.__manifest_types[name] = self.__manifest_types.get(
-            name, ManifestCustom
+        self.saved_manifests[name] = self.saved_manifests.get(
+            name, ManifestCustom('', 0, name, self)
         )
 
     def setFileAttributes(self, attrs):

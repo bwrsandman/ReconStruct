@@ -131,6 +131,8 @@ def fromMarkdown(source, app):
         if data_type == 'main':
             parent_manifest = main_manifest
         else:
+            if data_type not in main_manifest.saved_manifests:
+                main_manifest.add_custom_type(data_type)
             parent_manifest = main_manifest.saved_manifests[data_type]
         for label, size, data_type in readTable(table, headers):
             if not size:
