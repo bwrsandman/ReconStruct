@@ -223,6 +223,24 @@ class DeconstructTreeView(QTreeView):
                 QStandardItem(result.manifest.type()),
                 preview,
             ]
+
+        def build_custom_tree(result, index_item):
+            if type(result) is not ParsedCustom:
+                return
+            parent_item = index_item.child(index_item.rowCount() - 1)
+            # Custom nodes have tree representation of their data
+            # For the size of custom node, add an index indicator (e.g. [1])
+            for i, array_index in enumerate(result.data):
+                index_item = QStandardItem("[%d]" % i)
+                parent_item.appendRow([index_item])
+                # In a level under index indicator, show data types
+                for sub_result in array_index:
+                    index_item.appendRow(build_row(sub_result))
+                    build_custom_tree(sub_result, index_item)
+                if i == 0:
+                    self.setExpanded(index_item.index(), True)
+            self.setExpanded(parent_item.index(), True)
+
         self.manifest.clean_up()
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
@@ -231,20 +249,7 @@ class DeconstructTreeView(QTreeView):
         # Every root level node
         for result in main_result.data[0]:
             root.appendRow(build_row(result))
-            if type(result) is not ParsedCustom:
-                continue
-            # Custom nodes have tree representation of their data
-            parent_item = model.item(root.rowCount() - 1)
-            # For the size of custom node, add an index indicator (e.g. [1])
-            for i, array_index in enumerate(result.data):
-                index_item = QStandardItem("[%d]" % i)
-                parent_item.appendRow([index_item])
-                # In a level under index indicator, show data types
-                for sub_result in array_index:
-                    index_item.appendRow(build_row(sub_result))
-                if i == 0:
-                    self.setExpanded(index_item.index(), True)
-            self.setExpanded(parent_item.index(), True)
+            build_custom_tree(result, root)
         self.covered_size = main_result.size + main_result.index
 
     def get_selection_size(self):
