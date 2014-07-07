@@ -61,6 +61,7 @@ class DeconstructTreeView(QTreeView):
             self.COL_TYPE, QStandardItem(self.tr("Type")))
         model.setHorizontalHeaderItem(
             self.COL_PREVIEW, QStandardItem(self.tr("Preview")))
+        self.header().setStretchLastSection(False)
 
         selection_model = QItemSelectionModel(model, self)
         model.itemChanged.connect(self.on_itemChanged)
@@ -76,7 +77,7 @@ class DeconstructTreeView(QTreeView):
         self.setColumnWidth(self.COL_LABEL, 100)
         self.setColumnWidth(self.COL_SIZE, 50)
         self.setColumnWidth(self.COL_TYPE, 55)
-        self.setColumnWidth(self.COL_PREVIEW, 20)
+        self.setColumnWidth(self.COL_PREVIEW, 120)
 
     def on_itemChanged(self, item):
         parent = item.parent() or self.model().invisibleRootItem()
