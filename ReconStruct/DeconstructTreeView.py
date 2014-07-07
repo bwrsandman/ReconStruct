@@ -96,12 +96,16 @@ class DeconstructTreeView(QTreeView):
         ManifestClass = self.manifest.get_manifest(data_type)
         if data_type in self.manifest.saved_manifests:
             children = self.manifest.saved_manifests[data_type].sub_manifests
+        else:
+            children = []
         selected_row = self.selectionModel().selectedRows()[0]
-        sub_manifests = self._get_parent_manifest(selected_row).sub_manifests
+        manifest = self._get_parent_manifest(selected_row)
+        sub_manifests = manifest.sub_manifests
         sub_manifests[row] = ManifestClass(
-            label, size, data_type, self.manifest)
+            label, size, data_type, manifest
+        )
         if data_type in self.manifest.saved_manifests:
-            self.manifest.sub_manifests[row].sub_manifests = children
+            sub_manifests[row].sub_manifests = children
         self.refresh_view()
 
     def on_selectionChanged(self, destination, origin):
