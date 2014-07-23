@@ -31,9 +31,14 @@ class ManifestBytes(ManifestBase):
         super(ManifestBytes, self).__init__(label, size, type_name, parent)
 
     def __call__(self, data, start=0):
+        try:
+            ord_map = map(ord, data[start:start + self.size])
+            preview = " ".join(map(hex, ord_map))
+        except TypeError:  # Python 3
+            preview = " ".join(map(hex, data[start:start + self.size]))
         return self.parser()(
             self,
-            " ".join(map(hex, map(ord, data[start:start + self.size]))),
+            preview,
             start,
             self.size
         )

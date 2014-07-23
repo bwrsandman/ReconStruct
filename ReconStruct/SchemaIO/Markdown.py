@@ -20,7 +20,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from markdownwriter import MarkdownWriter, MarkdownTable
+try:
+    from markdownwriter.MarkdownWriter import MarkdownWriter
+    from markdownwriter.MarkdownTable import MarkdownTable
+except ImportError:
+    from markdownwriter import MarkdownWriter, MarkdownTable
 from markdown import Markdown, util
 
 try:
@@ -52,7 +56,7 @@ def toMarkdown(manifest):
         ])
     writer.addTable(table)
     writer.addSimpleLineBreak()
-    for type_name, custom_manifest in manifest.saved_manifests.iteritems():
+    for type_name, custom_manifest in manifest.saved_manifests.items():
         writer.addHeader(type_name, level=2)
         table = MarkdownTable(headers)
         for sub_manifest in custom_manifest.sub_manifests:
@@ -72,7 +76,7 @@ def toMarkdown(manifest):
     attrs = manifest.getFileAttributes()
     if attrs:
         table = MarkdownTable(attr_headers)
-        for key, val in attrs.iteritems():
+        for key, val in attrs.items():
             table.addRow([key, val])
         writer.addHeader('Attributes')
         writer.addTable(table)
