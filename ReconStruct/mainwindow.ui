@@ -74,6 +74,7 @@
     </property>
     <addaction name="action_Add"/>
     <addaction name="action_Remove"/>
+    <addaction name="action_Attributes"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
@@ -134,6 +135,11 @@
     <string>Del</string>
    </property>
   </action>
+  <action name="action_Attributes">
+   <property name="text">
+    <string>A&amp;ttributes</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -141,6 +147,7 @@
    <class>QHexEdit</class>
    <extends>QScrollArea</extends>
    <header>qhexedit.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -38,9 +38,11 @@ import bz2
 try:
     from ReconStruct.SchemaIO import Markdown
     from ReconStruct.DeconstructTreeView import DeconstructTreeView
+    from ReconStruct.fileattributeswindow import FileAttributesWindow
 except ImportError:
     from SchemaIO import Markdown
     from DeconstructTreeView import DeconstructTreeView
+    from fileattributeswindow import FileAttributesWindow
 
 
 logger = logging.getLogger(__name__)
@@ -90,6 +92,11 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_action_Remove_triggered(self):
         self.removeRow()
+
+    @pyqtSlot()
+    def on_action_Attributes_triggered(self):
+        attr_window = FileAttributesWindow(self.treeView.manifest, parent=self)
+        attr_window.show()
 
     def loadBinary(self, filename):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
