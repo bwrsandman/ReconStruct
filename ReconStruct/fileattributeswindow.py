@@ -33,11 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class FileAttributesWindow(QDialog):
-    def __init__(self, manifest, parent=None):
+    def __init__(self, manifest, on_quit, parent=None):
         super(FileAttributesWindow, self).__init__(parent)
         uifile = os.path.join(os.path.dirname(__file__), 'fileattributeswindow.ui')
         uic.loadUi(uifile, self)
         self.manifest = manifest
+        self.on_quit = on_quit
         self.set_view_from_attrs(manifest.getFileAttributes())
 
     def set_view_from_attrs(self, attrs):
@@ -62,4 +63,5 @@ class FileAttributesWindow(QDialog):
 
     def accept(self):
         self.manifest.setFileAttributes(self.get_attrs_from_view())
+        self.on_quit()
         return super(FileAttributesWindow, self).accept()

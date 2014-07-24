@@ -95,7 +95,11 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_action_Attributes_triggered(self):
-        attr_window = FileAttributesWindow(self.treeView.manifest, parent=self)
+        def on_quit():
+            if self._current_filename:
+                self.loadBinary(self._current_filename)
+        attr_window = FileAttributesWindow(self.treeView.manifest,
+                                           on_quit=on_quit, parent=self)
         attr_window.show()
 
     def loadBinary(self, filename):
