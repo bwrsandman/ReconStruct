@@ -29,8 +29,10 @@ from markdown import Markdown, util
 
 try:
     from ReconStruct.ManifestMain import ManifestMain
+    from ReconStruct.ManifestCustom import ManifestCustom
 except ImportError:
     from ManifestMain import ManifestMain
+    from ManifestCustom import ManifestCustom
 
 
 # Not to be translated
@@ -143,9 +145,16 @@ def fromMarkdown(source, app):
                 raise ValueError(app.tr("Row does not have a value for size."))
             if not data_type:
                 raise ValueError(app.tr("Row does not have a value for type."))
-            manifest = main_manifest.get_manifest(data_type)
-            parent_manifest.add(manifest(label, size, data_type))
-            continue
+            new_manifest = main_manifest.saved_manifests.get(
+                data_type,
+                main_manifest.get_manifest(data_type)(label, size, data_type)
+            )
+            parent_manifest.add(new_manifest)
+            if (type(new_manifest) is ManifestCustom
+                    and data_type not in main_manifest.saved_manifests):
+                main_manifest.saved_manifests[data_type] = new_manifest
+
+
     root = _getElemFromSource(source)
     main_manifest = ManifestMain()
     if len(root) < 2:
@@ -175,6 +184,7 @@ def fromMarkdown(source, app):
         end_index -= 2
         main_manifest.setFileAttributes(_readAttributesTable(root[-1]))
 
+    # Custom data types
     for i in range(2, end_index, 2):
         sub_h2 = root[i]
         sub_table = root[i + 1]
