@@ -53,7 +53,7 @@ class ManifestBase(object):
             if type(ret) is float:
                 ret = int(ret)
             assert type(ret) in (int, bool), u"ret is of type %s" % type(ret)
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, AssertionError):
             ret = 0
         return ret
 

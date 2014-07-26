@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QApplication,
     QErrorMessage,
+    QLabel
 )
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QCursor
@@ -46,6 +47,7 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
+STATUSBAR_TIMEOUT = 2000
 
 
 class MainWindow(QMainWindow):
@@ -54,7 +56,15 @@ class MainWindow(QMainWindow):
         uifile = os.path.join(os.path.dirname(__file__), 'mainwindow.ui')
         uic.loadUi(uifile, self)
         self._current_filename = None
+        self._current_schema_filename = None
         self.treeView = DeconstructTreeView(self.qHexEdit, self.splitter)
+        self.lblSelection = QLabel()
+        self.lblRange = QLabel()
+        self.lblOffset = QLabel()
+        self.statusBar.insertPermanentWidget(0, self.lblSelection)
+        self.statusBar.insertPermanentWidget(1, self.lblRange)
+        self.statusBar.insertPermanentWidget(2, self.lblOffset)
+        self.qHexEdit.currentAddressChanged.connect(self.currentAddressChanged)
         self.show()
 
     @pyqtSlot()
@@ -115,6 +125,10 @@ class MainWindow(QMainWindow):
                 data = f.read()
             self.qHexEdit.setData(data)
             self._current_filename = filename
+            self.statusBar.showMessage(
+                self.tr("Loaded binary: ") + os.path.basename(filename),
+                STATUSBAR_TIMEOUT
+            )
         except IOError as e:
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)
@@ -137,6 +151,12 @@ class MainWindow(QMainWindow):
                 self.tr('Format Error: ') + str(e)
             )
             logger.exception(e)
+        else:
+            self._current_schema_filename = filename
+            self.statusBar.showMessage(
+                self.tr("Loaded schema: ") + os.path.basename(filename),
+                STATUSBAR_TIMEOUT
+            )
         finally:
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
@@ -160,3 +180,16 @@ class MainWindow(QMainWindow):
 
     def removeRow(self):
         self.treeView.remove_row()
+
+    def currentAddressChanged(self):
+        """Display selection information and cursor location
+        Hide selection info if nothing is selected"""
+        selection = self.qHexEdit.selectionSize()
+        start = self.qHexEdit.selectionStart()
+        end = self.qHexEdit.selectionEnd()
+        offset = self.qHexEdit.cursorPosition()
+        self.lblSelection.setText(self.tr('Selection: 0x%X') % selection)
+        self.lblRange.setText(self.tr('Range: 0x%X - 0x%X') % (start, end))
+        self.lblOffset.setText(self.tr('Offset: 0x%X') % offset)
+        self.lblSelection.setVisible(selection)
+        self.lblRange.setVisible(selection)
