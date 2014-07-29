@@ -16,6 +16,8 @@ if sys.argv[-1] == 'publish':
 
 readme = open('README.md').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
+requirements = open('requirements.txt').read().strip().split('\n')
+requirements = [i for i in requirements if not i.startswith('#')]
 
 setup(
     name='ReconStruct',
@@ -30,8 +32,7 @@ setup(
     ],
     package_dir={'ReconStruct': 'ReconStruct'},
     include_package_data=True,
-    install_requires=[
-    ],
+    install_requires=requirements,
     license="BSD",
     zip_safe=False,
     keywords='ReconStruct',
@@ -45,6 +46,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
 )
