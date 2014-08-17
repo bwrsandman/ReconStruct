@@ -158,6 +158,8 @@ class MainWindow(QMainWindow):
                 STATUSBAR_TIMEOUT
             )
         finally:
+            if self._current_filename:
+                self.loadBinary(self._current_filename)
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
 
