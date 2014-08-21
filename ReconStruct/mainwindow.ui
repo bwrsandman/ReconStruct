@@ -62,6 +62,7 @@
     </property>
     <addaction name="action_Open"/>
     <addaction name="action_Save"/>
+    <addaction name="action_Reload"/>
     <addaction name="separator"/>
     <addaction name="action_Import_Schema"/>
     <addaction name="action_Export_Schema"/>
@@ -138,6 +139,14 @@
   <action name="action_Attributes">
    <property name="text">
     <string>A&amp;ttributes</string>
+   </property>
+  </action>
+  <action name="action_Reload">
+   <property name="text">
+    <string>&amp;Reload</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
  </widget>

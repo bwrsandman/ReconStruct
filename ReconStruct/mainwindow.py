@@ -19,6 +19,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from difflib import SequenceMatcher
 
 import os
 
@@ -74,6 +75,11 @@ class MainWindow(QMainWindow):
             self, self.tr(u"Open Binary File"), '.')
         if filename:
             self.loadBinary(filename)
+
+    @pyqtSlot()
+    def on_action_Reload_triggered(self):
+        if self._current_filename:
+            self.refreshBinary()
 
     @pyqtSlot()
     def on_action_Save_triggered(self):
@@ -140,15 +146,37 @@ class MainWindow(QMainWindow):
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
 
+
+    def refreshBinary(self):
+        old_data = bytes(self.qHexEdit.data())
+        self.loadBinary(self._current_filename)
+        new_data = bytes(self.qHexEdit.data())
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        # Long call (1 second)
+        diff_op_codes = SequenceMatcher(None, old_data, new_data).get_opcodes()
+        delete_indices = []
+        replace_ranges = []
+        insert_ranges = []
+        for op, old1, old2, new1, new2 in diff_op_codes:
+            if op == 'delete':
+                delete_indices.append(new1)
+            elif op == 'replace':
+                replace_ranges.append((new1, new2))
+            elif op == 'insert':
+                insert_ranges.append((new1, new2))
+        for start, end in replace_ranges + insert_ranges:
+            self.qHexEdit.setHighlightedRange(start, end)
+        QApplication.restoreOverrideCursor()
+
+    def saveBinary(self, filename):
+        pass
+
     def refreshTitle(self):
         title = " - ".join(map(os.path.basename, filter(None, (
             self._current_filename,
             self._current_schema_filename,
         )))) + " - ReconStruct"
         self.setWindowTitle(title)
-
-    def saveBinary(self, filename):
-        pass
 
     def loadSchema(self, filename):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
