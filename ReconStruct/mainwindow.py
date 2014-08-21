@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self.statusBar.insertPermanentWidget(1, self.lblRange)
         self.statusBar.insertPermanentWidget(2, self.lblOffset)
         self.qHexEdit.currentAddressChanged.connect(self.currentAddressChanged)
+        self.refreshTitle()
         self.show()
 
     @pyqtSlot()
@@ -129,6 +130,7 @@ class MainWindow(QMainWindow):
                 self.tr("Loaded binary: ") + os.path.basename(filename),
                 STATUSBAR_TIMEOUT
             )
+            self.refreshTitle()
         except IOError as e:
             QErrorMessage(self).showMessage(
                 self.tr('Format Error: ') + str(e)
@@ -137,6 +139,13 @@ class MainWindow(QMainWindow):
         finally:
             self.treeView.refresh_view()
             QApplication.restoreOverrideCursor()
+
+    def refreshTitle(self):
+        title = " - ".join(map(os.path.basename, filter(None, (
+            self._current_filename,
+            self._current_schema_filename,
+        )))) + " - ReconStruct"
+        self.setWindowTitle(title)
 
     def saveBinary(self, filename):
         pass
@@ -157,6 +166,7 @@ class MainWindow(QMainWindow):
                 self.tr("Loaded schema: ") + os.path.basename(filename),
                 STATUSBAR_TIMEOUT
             )
+            self.refreshTitle()
         finally:
             if self._current_filename:
                 self.loadBinary(self._current_filename)
