@@ -64,6 +64,8 @@ class ManifestCustom(ManifestBase):
         :returns:  int -- the parsed size.
         """
         variables = {}
+        if not hasattr(self, 'current_data'):
+            raise ArithmeticError("Manifest computation called out of order")
         try:
             expr = Expression(label or '0')
             for var in expr:
@@ -72,6 +74,7 @@ class ManifestCustom(ManifestBase):
                 elif self.parent:
                     value = self.parent.actual_size_of(var)
                 else:
+                    logger.warn("Found no value for '%s'", var)
                     value = 0
                 try:
                     if type(value) is str and value.startswith('0x'):
@@ -79,6 +82,7 @@ class ManifestCustom(ManifestBase):
                     elif type(value) not in (int, bool):
                         value = int(value or 0)
                 except ValueError:
+                    logger.warn("Could not typecast '%s' from '%s'", value, var)
                     value = 0
                 variables[var] = value
             return expr(**variables)  # pylint: disable=W0142
