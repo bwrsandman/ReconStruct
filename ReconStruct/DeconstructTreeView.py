@@ -240,11 +240,10 @@ class DeconstructTreeView(QTreeView):
                     self.setExpanded(index_item.index(), True)
             self.setExpanded(parent_item.index(), True)
 
+        main_result = self.manifest(bytes(self.qHexEdit.data()))
         self.manifest.clean_up()
         root = self.model().invisibleRootItem()
         root.removeRows(0, root.rowCount())
-        main_result = self.manifest(bytes(self.qHexEdit.data()))
-        model = self.model()
         # Every root level node
         for result in main_result.data[0]:
             root.appendRow(build_row(result))

@@ -107,11 +107,13 @@ class ManifestCustom(ManifestBase):
             self.current_data = dict()
             sub_ret = []
             for manifest in self:
+                manifest.parent = self
                 result = manifest(data, start)
                 sub_ret.append(result)
                 start += result.size
                 self.current_data[manifest.label] = result
             ret.append(sub_ret)
+            del self.current_data
         return self.parser()(self, ret, index, parsed)
 
     def __iter__(self):
