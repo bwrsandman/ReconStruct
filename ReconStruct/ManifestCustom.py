@@ -73,11 +73,13 @@ class ManifestCustom(ManifestBase):
                     value = self.parent.actual_size_of(var)
                 else:
                     value = 0
-                if type(value) not in (int, bool):
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        value = 0
+                try:
+                    if type(value) is str and value.startswith('0x'):
+                        value = int(value, 16)
+                    elif type(value) not in (int, bool):
+                        value = int(value or 0)
+                except ValueError:
+                    value = 0
                 variables[var] = value
             return expr(**variables)  # pylint: disable=W0142
         except Exception as e:

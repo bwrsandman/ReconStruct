@@ -32,10 +32,12 @@ class ManifestBytes(ManifestBase):
 
     def __call__(self, data, start=0):
         try:
-            ord_map = map(ord, data[start:start + self.size])
-            preview = " ".join(map(hex, ord_map))
+            hex_map = map(hex, ord, data[start:start + self.size])
         except TypeError:  # Python 3
-            preview = " ".join(map(hex, data[start:start + self.size]))
+            hex_map = map(hex, data[start:start + self.size])
+        preview = "".join(i[2:].zfill(2) for i in hex_map)
+        if preview:
+            preview = "0x" + preview
         return self.parser()(
             self,
             preview,
