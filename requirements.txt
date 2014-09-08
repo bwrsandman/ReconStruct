@@ -1,7 +1,7 @@
 wheel>=0.22.0
 setuptools>=2.1
 Markdown
-MarkdownWriter>=2
+MarkdownWriter>=1.1
 # https://github.com/alphaomega-technology/Equation/archive/master.tar.gz
 Equation
 # ./QHexEdit/python
